@@ -38,6 +38,7 @@ class C {
   static const txt2 = Color(0xFF90A4AE);
   static const purple = Color(0xFF7B1FA2);
   static const teal = Color(0xFF0097A7);
+  static const border = Color(0xFF1A3357);
 
   static const gradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -45,6 +46,42 @@ class C {
     colors: [Color(0xFF0A1628), Color(0xFF0D47A1), Color(0xFF1565C0)],
   );
 }
+
+// Renk takma adları — aşağıdaki "Trafik Levhaları" bölümü bu kısa isimlerle
+// çağrılıyor; hepsi C sınıfındaki tek tip renk paletine bağlanır ki tüm
+// uygulama tutarlı görünsün.
+const Color kWarning = C.warn;
+const Color kNavyAccent = C.primary;
+const Color kDanger = C.err;
+const Color kPurple = C.purple;
+const Color kTeal = C.teal;
+const Color kPrimary = C.primary;
+const Color kSuccess = C.ok;
+const Color kSurface = C.surface;
+const Color kCard = C.card;
+const Color kCardElevated = C.cardHi;
+const Color kBorder = C.border;
+
+/// Küçük metin stili yardımcıları (Trafik Levhaları bölümünde kullanılıyor).
+TextStyle ts({
+  double size = 13,
+  FontWeight w = FontWeight.normal,
+  Color color = C.txt,
+  double? height,
+}) => TextStyle(fontSize: size, fontWeight: w, color: color, height: height);
+
+TextStyle tsD({
+  double size = 16,
+  FontWeight w = FontWeight.w700,
+  Color color = C.txt,
+  double? height,
+}) => TextStyle(
+  fontSize: size,
+  fontWeight: w,
+  color: color,
+  height: height,
+  letterSpacing: -0.2,
+);
 
 ThemeData get _theme => ThemeData(
   brightness: Brightness.dark,
@@ -138,14 +175,6 @@ class Q {
     required this.cat,
     required this.explanation,
   });
-}
-
-// ══════════════════════════════════════════════════════════════════
-//  TRAFFIC SIGN MODEL
-// ══════════════════════════════════════════════════════════════════
-class Sign {
-  final String name, desc, emoji, type, color;
-  const Sign(this.name, this.desc, this.emoji, this.type, this.color);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -279,8 +308,7 @@ class QB {
           'Sadece karanlıkta',
           'Sadece çift şeritlide',
         ],
-        explanation:
-            'Tünellerde uzun far kullanmak yasaktır; kısa far kullanılmalıdır.',
+        explanation: 'Tünellerde uzun far kullanmak yasaktır; kısa far kullanılmalıdır.',
       ),
       Q(
         id: 'T12',
@@ -353,12 +381,7 @@ class QB {
         cat: Cat.trafik,
         correct: 3,
         text: 'Otobanda en sol şerit (hız şeridi) kimin içindir?',
-        opts: [
-          'Yavaş araçlar',
-          'Kamyonlar',
-          'Her araç',
-          'Geçiş (sollama) için',
-        ],
+        opts: ['Yavaş araçlar', 'Kamyonlar', 'Her araç', 'Geçiş (sollama) için'],
         explanation:
             'Otobandaki en sol şerit sollama şerididir; sollama bittikten sonra sağ şeride geçilmelidir.',
       ),
@@ -368,12 +391,7 @@ class QB {
         correct: 1,
         text:
             'Sürücüler araçlarında yanında bulundurmak zorunda olmadıkları belge hangisidir?',
-        opts: [
-          'Ehliyet',
-          'Sigorta poliçesi fotokopisi',
-          'Ruhsat',
-          'Muayene belgesi',
-        ],
+        opts: ['Ehliyet', 'Sigorta poliçesi fotokopisi', 'Ruhsat', 'Muayene belgesi'],
         explanation:
             'Sürücüler ehliyet, ruhsat ve geçerli zorunlu trafik sigortasını araçta bulundurmak zorundadır; poliçe fotokopisi zorunlu değildir.',
       ),
@@ -421,8 +439,7 @@ class QB {
         correct: 2,
         text: 'CPR\'da dakikada kaç göğüs baskısı uygulanır?',
         opts: ['60-80', '80-100', '100-120', '120-140'],
-        explanation:
-            'Güncel AHA kılavuzuna göre CPR\'da dakikada 100-120 baskı uygulanır.',
+        explanation: 'Güncel AHA kılavuzuna göre CPR\'da dakikada 100-120 baskı uygulanır.',
       ),
       Q(
         id: 'IY03',
@@ -435,8 +452,7 @@ class QB {
           '20 baskı / 2 solunum',
           '10 baskı / 1 solunum',
         ],
-        explanation:
-            'Güncel protokole göre 30 göğüs baskısına 2 kurtarma solunumu yapılır.',
+        explanation: 'Güncel protokole göre 30 göğüs baskısına 2 kurtarma solunumu yapılır.',
       ),
       Q(
         id: 'IY04',
@@ -444,12 +460,7 @@ class QB {
         correct: 1,
         text:
             'Bilinçsiz yaralıya koma pozisyonu (lateral dekübitus) ne zaman verilir?',
-        opts: [
-          'Her yaralıya',
-          'Solunum varsa ama bilinç yoksa',
-          'Sadece çocuklara',
-          'Bacak kırığı varsa',
-        ],
+        opts: ['Her yaralıya', 'Solunum varsa ama bilinç yoksa', 'Sadece çocuklara', 'Bacak kırığı varsa'],
         explanation:
             'Koma pozisyonu; solunumu olan, bilinci kapalı ve omurga şüphesi bulunmayan yaralılar için kullanılır.',
       ),
@@ -458,12 +469,7 @@ class QB {
         cat: Cat.ilkYardim,
         correct: 2,
         text: 'Arterden kanamada ilk yapılması gereken nedir?',
-        opts: [
-          'Yarayı yıkamak',
-          'Merhem sürmek',
-          'Kalbe yakın taraftan baskı uygulamak',
-          'Turnike için beklemek',
-        ],
+        opts: ['Yarayı yıkamak', 'Merhem sürmek', 'Kalbe yakın taraftan baskı uygulamak', 'Turnike için beklemek'],
         explanation:
             'Arterden kanamalarda kalbe yakın (proksimal) bölgeye baskı uygulanarak kanama durdurulmaya çalışılır.',
       ),
@@ -473,20 +479,14 @@ class QB {
         correct: 0,
         text: 'Göğüs baskısında sternumun kaç cm bastırılması gerekir?',
         opts: ['5-6 cm', '2-3 cm', '7-8 cm', '1-2 cm'],
-        explanation:
-            'Yetişkinde göğüs baskısı 5-6 cm derinliğinde uygulanmalıdır.',
+        explanation: 'Yetişkinde göğüs baskısı 5-6 cm derinliğinde uygulanmalıdır.',
       ),
       Q(
         id: 'IY07',
         cat: Cat.ilkYardim,
         correct: 3,
         text: 'Yanık yarasına ilk yardımda ne yapılır?',
-        opts: [
-          'Buz uygulanır',
-          'Krem sürülür',
-          'Patlatılır',
-          '15-20 dk soğuk su tutulur',
-        ],
+        opts: ['Buz uygulanır', 'Krem sürülür', 'Patlatılır', '15-20 dk soğuk su tutulur'],
         explanation:
             'Yanıkta buz değil, oda sıcaklığında akan soğuk su 15-20 dakika uygulanmalıdır; buz doku hasarını artırır.',
       ),
@@ -495,12 +495,7 @@ class QB {
         cat: Cat.ilkYardim,
         correct: 1,
         text: 'Şok belirtileri arasında hangisi yoktur?',
-        opts: [
-          'Soluk ten',
-          'Yüksek tansiyon',
-          'Hızlı nefes',
-          'Bilinç bulanıklığı',
-        ],
+        opts: ['Soluk ten', 'Yüksek tansiyon', 'Hızlı nefes', 'Bilinç bulanıklığı'],
         explanation:
             'Şokta tansiyon düşer, yükselmez. Soluk ten, hızlı nefes ve bilinç bulanıklığı şok belirtilerindendir.',
       ),
@@ -509,12 +504,7 @@ class QB {
         cat: Cat.ilkYardim,
         correct: 2,
         text: 'Burun kanamasında baş nasıl tutulmalıdır?',
-        opts: [
-          'Geriye eğilir',
-          'Düz tutulur',
-          'Hafif öne eğilir',
-          'Yere yatırılır',
-        ],
+        opts: ['Geriye eğilir', 'Düz tutulur', 'Hafif öne eğilir', 'Yere yatırılır'],
         explanation:
             'Burun kanamasında baş hafif öne eğilir; geriye eğilmek kanın yutulmasına ve mideye inmesine yol açar.',
       ),
@@ -523,12 +513,7 @@ class QB {
         cat: Cat.ilkYardim,
         correct: 0,
         text: 'Kırık şüphesi olan ekstremiteye ne yapılır?',
-        opts: [
-          'Hareket ettirilmeden atel uygulanır',
-          'Düzeltilir',
-          'Masaj yapılır',
-          'Sıcak uygulanır',
-        ],
+        opts: ['Hareket ettirilmeden atel uygulanır', 'Düzeltilir', 'Masaj yapılır', 'Sıcak uygulanır'],
         explanation:
             'Kırık şüphesinde uzuv hareket ettirilmeden atel uygulanır; düzeltme girişimi damar-sinir hasarını artırabilir.',
       ),
@@ -537,12 +522,7 @@ class QB {
         cat: Cat.ilkYardim,
         correct: 3,
         text: 'Kafadan yaralı bir kişi için ilk yardımda en önemli adım nedir?',
-        opts: [
-          'Su verilir',
-          'Ayağa kaldırılır',
-          'Soğuk bez uygulanır',
-          'Boyun sabitlenir ve ambulans çağrılır',
-        ],
+        opts: ['Su verilir', 'Ayağa kaldırılır', 'Soğuk bez uygulanır', 'Boyun sabitlenir ve ambulans çağrılır'],
         explanation:
             'Kafa-boyun bölgesinde yaralanma şüphesi varsa boyun sabitlenip ambulans çağrılmalı, hastaya hiçbir şey içirilmemelidir.',
       ),
@@ -552,8 +532,7 @@ class QB {
         correct: 1,
         text: 'Acil yardım hattı numarası kaçtır?',
         opts: ['110', '112', '118', '155'],
-        explanation:
-            'Türkiye\'de acil yardım hattı 112\'dir; ambulans, itfaiye ve polisi yönlendirir.',
+        explanation: 'Türkiye\'de acil yardım hattı 112\'dir; ambulans, itfaiye ve polisi yönlendirir.',
       ),
 
       // ── MOTOR BİLGİSİ ──────────────────────────────────────────
@@ -562,12 +541,7 @@ class QB {
         cat: Cat.motor,
         correct: 1,
         text: 'Motor yağı seviyesi en doğru ne zaman kontrol edilir?',
-        opts: [
-          'Motor çalışırken',
-          'Motor soğukken ve düz zeminde',
-          'Hemen sönmeden',
-          'Sadece serviste',
-        ],
+        opts: ['Motor çalışırken', 'Motor soğukken ve düz zeminde', 'Hemen sönmeden', 'Sadece serviste'],
         explanation:
             'Motor yağı motor soğukken ve araç düz zeminde park halindeyken çubukla (dipstick) kontrol edilir.',
       ),
@@ -577,20 +551,14 @@ class QB {
         correct: 1,
         text: 'Standart araç aküsü kaç volt üretir?',
         opts: ['6 V', '12 V', '24 V', '48 V'],
-        explanation:
-            'Standart otomobil aküsü 12 voltluk doğru akım (DC) üretir.',
+        explanation: 'Standart otomobil aküsü 12 voltluk doğru akım (DC) üretir.',
       ),
       Q(
         id: 'M03',
         cat: Cat.motor,
         correct: 1,
         text: 'Turbo sistemi ne işe yarar?',
-        opts: [
-          'Yakıt tüketimini artırır',
-          'Motor gücünü artırır',
-          'Freni güçlendirir',
-          'Direksiyon kolaylaştırır',
-        ],
+        opts: ['Yakıt tüketimini artırır', 'Motor gücünü artırır', 'Freni güçlendirir', 'Direksiyon kolaylaştırır'],
         explanation:
             'Turbo kompresör, egzoz gazlarını kullanarak motora daha fazla hava-yakıt karışımı sağlar; bu güç artışı demektir.',
       ),
@@ -599,12 +567,7 @@ class QB {
         cat: Cat.motor,
         correct: 2,
         text: 'Soğutma suyu (antifriz) kontrolü nasıl yapılır?',
-        opts: [
-          'Motor çalışırken',
-          'Hemen sönmeden',
-          'Motor tamamen soğuduktan sonra',
-          'Her gün zorunlu',
-        ],
+        opts: ['Motor çalışırken', 'Hemen sönmeden', 'Motor tamamen soğuduktan sonra', 'Her gün zorunlu'],
         explanation:
             'Motor sıcakken soğutma suyu kapağı açılırsa kaynayan su fışkırarak ciddi yanıklara neden olabilir; tamamen soğutulmalıdır.',
       ),
@@ -613,12 +576,7 @@ class QB {
         cat: Cat.motor,
         correct: 0,
         text: 'Akü "şarj" uyarısı yandığında ne yapılmalıdır?',
-        opts: [
-          'En yakın güvenli yerde durulur',
-          'Hız artırılır',
-          'Klima açılır',
-          'Normal sürüşe devam edilir',
-        ],
+        opts: ['En yakın güvenli yerde durulur', 'Hız artırılır', 'Klima açılır', 'Normal sürüşe devam edilir'],
         explanation:
             'Şarj uyarısı alternatörün çalışmadığını gösterir; akü kısa sürede bitebilir, araç güvenli yerde durdurulmalıdır.',
       ),
@@ -627,12 +585,7 @@ class QB {
         cat: Cat.motor,
         correct: 3,
         text: 'Motor ısısı aniden yükselirse sürücü ne yapmalıdır?',
-        opts: [
-          'Gaz verir',
-          'Klimayı açar',
-          'Hızı artırır',
-          'Durur, motoru söndürür ve soğumasını bekler',
-        ],
+        opts: ['Gaz verir', 'Klimayı açar', 'Hızı artırır', 'Durur, motoru söndürür ve soğumasını bekler'],
         explanation:
             'Aşırı ısınma motor hasarına yol açar; araç durdurulup motor söndürülmeli, soğumadan su eklenmemelidir.',
       ),
@@ -641,12 +594,7 @@ class QB {
         cat: Cat.motor,
         correct: 1,
         text: 'Vites kutusunda manuel şanzımanda debriyaj pedalı ne yapar?',
-        opts: [
-          'Freni devreye sokar',
-          'Motoru şanzımandan ayırır',
-          'Gaz verir',
-          'Direksiyon kilitler',
-        ],
+        opts: ['Freni devreye sokar', 'Motoru şanzımandan ayırır', 'Gaz verir', 'Direksiyon kilitler'],
         explanation:
             'Debriyaj pedalına basıldığında motor ile şanzıman birbirinden ayrılır; bu sayede vites değiştirilebilir.',
       ),
@@ -654,14 +602,8 @@ class QB {
         id: 'M08',
         cat: Cat.motor,
         correct: 2,
-        text:
-            'Direksiyon simidinde titreşim hissedilmesinin en yaygın nedeni nedir?',
-        opts: [
-          'Motor arızası',
-          'Fren aşınması',
-          'Lastik balansı bozukluğu',
-          'Akü zayıflığı',
-        ],
+        text: 'Direksiyon simidinde titreşim hissedilmesinin en yaygın nedeni nedir?',
+        opts: ['Motor arızası', 'Fren aşınması', 'Lastik balansı bozukluğu', 'Akü zayıflığı'],
         explanation:
             'Lastik balansı bozuk olduğunda yüksek hızda direksiyon simidinde titreşim oluşur; balans ayarı yaptırılmalıdır.',
       ),
@@ -670,12 +612,7 @@ class QB {
         cat: Cat.motor,
         correct: 0,
         text: 'Fren pedalı yere kadar iniyorsa (balon freni) sorun nedir?',
-        opts: [
-          'Fren hidroliği azalmış veya hava girmiş',
-          'Motor arızası',
-          'Lastik patlaması',
-          'Direksiyon hasarı',
-        ],
+        opts: ['Fren hidroliği azalmış veya hava girmiş', 'Motor arızası', 'Lastik patlaması', 'Direksiyon hasarı'],
         explanation:
             'Fren pedalının yere kadar inmesi hidrolik sistemde hava oluştuğunu veya fren sıvısının azaldığını gösterir.',
       ),
@@ -684,12 +621,7 @@ class QB {
         cat: Cat.motor,
         correct: 3,
         text: 'Katalitik konvertör ne işe yarar?',
-        opts: [
-          'Yakıt pompalar',
-          'Güç artırır',
-          'Ses azaltır',
-          'Egzoz gazlarındaki zararlı maddeleri azaltır',
-        ],
+        opts: ['Yakıt pompalar', 'Güç artırır', 'Ses azaltır', 'Egzoz gazlarındaki zararlı maddeleri azaltır'],
         explanation:
             'Katalitik konvertör CO, HC ve NOx gibi zararlı egzoz gazlarını daha az zararlı bileşiklere dönüştürür.',
       ),
@@ -700,12 +632,7 @@ class QB {
         cat: Cat.trafikAdabi,
         correct: 2,
         text: 'Yaya geçidine yaklaşırken sürücü ne yapmalıdır?',
-        opts: [
-          'Hızlanır',
-          'Klakson çalar',
-          'Hızı düşürür, yayaya yol verir',
-          'Normal hızda devam eder',
-        ],
+        opts: ['Hızlanır', 'Klakson çalar', 'Hızı düşürür, yayaya yol verir', 'Normal hızda devam eder'],
         explanation:
             'Yaya geçidinde geçmekte olan veya geçmek üzere olan yayalara öncelik tanımak zorunludur.',
       ),
@@ -714,26 +641,15 @@ class QB {
         cat: Cat.trafikAdabi,
         correct: 1,
         text: 'Ambulans veya itfaiye yaklaşırken sürücü ne yapmalıdır?',
-        opts: [
-          'Hızlanır',
-          'Sağa çekilip durur',
-          'Klakson çalar',
-          'Öndeki aracı iter',
-        ],
-        explanation:
-            'Acil durum araçlarına yol vermek yasal zorunluluktur; sürücü sağa çekilir ve geçişi bekler.',
+        opts: ['Hızlanır', 'Sağa çekilip durur', 'Klakson çalar', 'Öndeki aracı iter'],
+        explanation: 'Acil durum araçlarına yol vermek yasal zorunluluktur; sürücü sağa çekilir ve geçişi bekler.',
       ),
       Q(
         id: 'TA03',
         cat: Cat.trafikAdabi,
         correct: 2,
         text: 'Okul önünde çocuklar geçerken ne yapılmalıdır?',
-        opts: [
-          'Klakson çalarak uyarılır',
-          'Yavaşça geçilir',
-          'Araç tamamen durdurulur',
-          'Hızla geçilir',
-        ],
+        opts: ['Klakson çalarak uyarılır', 'Yavaşça geçilir', 'Araç tamamen durdurulur', 'Hızla geçilir'],
         explanation:
             'Çocukların güvenliği için araç tamamen durdurulur ve çocukların güvenli geçişi sağlanır.',
       ),
@@ -742,14 +658,8 @@ class QB {
         cat: Cat.trafikAdabi,
         correct: 0,
         text: 'Tünel girerken sürücü ne yapmalıdır?',
-        opts: [
-          'Kısa farları yakar',
-          'Fenerini söndürür',
-          'Uzun farları yakar',
-          'Hızlanır',
-        ],
-        explanation:
-            'Tünellerde kısa farlar yakılır; uzun far karşıdan gelen sürücülerin görüşünü engeller.',
+        opts: ['Kısa farları yakar', 'Fenerini söndürür', 'Uzun farları yakar', 'Hızlanır'],
+        explanation: 'Tünellerde kısa farlar yakılır; uzun far karşıdan gelen sürücülerin görüşünü engeller.',
       ),
       Q(
         id: 'TA05',
@@ -757,12 +667,7 @@ class QB {
         correct: 3,
         text:
             'Karşıdan gelen araçların uzun farları gözleri kamaştırıyorsa sürücü ne yapmalıdır?',
-        opts: [
-          'Uzun faraları yakar',
-          'Gözlerini kısar',
-          'Durur',
-          'Yolun sağına yönelir, gerekirse durur',
-        ],
+        opts: ['Uzun faraları yakar', 'Gözlerini kısar', 'Durur', 'Yolun sağına yönelir, gerekirse durur'],
         explanation:
             'Kamaşmada yolun sağına yönelin; göz kısmak veya karşılık vermek tehlikelidir, gerekirse araç durdurulur.',
       ),
@@ -771,12 +676,7 @@ class QB {
         cat: Cat.trafikAdabi,
         correct: 1,
         text: 'Şehir içinde gece uzun far ne zaman kullanılabilir?',
-        opts: [
-          'Her zaman',
-          'Karşıdan araç yoksa ve aydınlatma yetersizse',
-          'Her zaman yasak',
-          'Sadece fırtınada',
-        ],
+        opts: ['Her zaman', 'Karşıdan araç yoksa ve aydınlatma yetersizse', 'Her zaman yasak', 'Sadece fırtınada'],
         explanation:
             'Şehir içinde karşıdan araç gelmiyorsa ve yol aydınlatması yetersizse uzun far kullanılabilir.',
       ),
@@ -786,12 +686,7 @@ class QB {
         correct: 2,
         text:
             'Dik bir yokuşta karşıdan araç geliyorsa yol aşağı inen araca mı, yoksa yukarı çıkana mı aittir?',
-        opts: [
-          'Aşağı inene',
-          'Hangisi daha geniş şeritte',
-          'Yukarı çıkana',
-          'İkisi de bekler',
-        ],
+        opts: ['Aşağı inene', 'Hangisi daha geniş şeritte', 'Yukarı çıkana', 'İkisi de bekler'],
         explanation:
             'Dar ve dik yollarda yukarı çıkan araç önceliğe sahiptir; aşağı inen araç bekleme kolaylığına sahiptir.',
       ),
@@ -821,15 +716,13 @@ class QB {
         correct: 2,
         text: 'Yuvarlak kırmızı çerçeveli levhalar ne ifade eder?',
         opts: ['Uyarı', 'Bilgi', 'Yasak ve kısıtlama', 'Zorunluluk'],
-        explanation:
-            'Yuvarlak kırmızı çerçeveli levhalar yasaklayıcı veya kısıtlayıcı levhalardır.',
+        explanation: 'Yuvarlak kırmızı çerçeveli levhalar yasaklayıcı veya kısıtlayıcı levhalardır.',
       ),
       Q(
         id: 'L03',
         cat: Cat.levhalar,
         correct: 2,
-        text:
-            'Mavi zemin üzerinde beyaz işaretli yuvarlak levhalar ne ifade eder?',
+        text: 'Mavi zemin üzerinde beyaz işaretli yuvarlak levhalar ne ifade eder?',
         opts: ['Yasak', 'Uyarı', 'Zorunluluk (emir)', 'Bilgi'],
         explanation:
             'Mavi zeminli beyaz işaretli yuvarlak levhalar zorunluluk (emir) levhalarıdır; uyulması zorunludur.',
@@ -839,12 +732,7 @@ class QB {
         cat: Cat.levhalar,
         correct: 2,
         text: '"Dur" levhası hangi şekil ve renktedir?',
-        opts: [
-          'Üçgen kırmızı',
-          'Yuvarlak kırmızı',
-          'Sekizgen kırmızı-beyaz',
-          'Kare kırmızı',
-        ],
+        opts: ['Üçgen kırmızı', 'Yuvarlak kırmızı', 'Sekizgen kırmızı-beyaz', 'Kare kırmızı'],
         explanation:
             '"Dur" levhası sekizgen (8 köşeli) kırmızı zemin üzerine beyaz "DUR" yazısından oluşur.',
       ),
@@ -853,12 +741,7 @@ class QB {
         cat: Cat.levhalar,
         correct: 1,
         text: '"Yol Ver" levhası nasıl görünür?',
-        opts: [
-          'Kare sarı',
-          'Ters üçgen kırmızı-beyaz',
-          'Yuvarlak mavi',
-          'Üçgen sarı',
-        ],
+        opts: ['Kare sarı', 'Ters üçgen kırmızı-beyaz', 'Yuvarlak mavi', 'Üçgen sarı'],
         explanation:
             '"Yol Ver" levhası tepesi aşağıda, beyaz zemin üzerinde kırmızı kenarlı ters üçgendir.',
       ),
@@ -868,34 +751,22 @@ class QB {
         correct: 0,
         text: 'Mavi dikdörtgen bilgi levhası ne ifade eder?',
         opts: ['Genel bilgi ve yönlendirme', 'Yasak', 'Uyarı', 'Zorunluluk'],
-        explanation:
-            'Mavi dikdörtgen levhalar genel bilgi, yönlendirme ve hizmet bilgilerini içerir.',
+        explanation: 'Mavi dikdörtgen levhalar genel bilgi, yönlendirme ve hizmet bilgilerini içerir.',
       ),
       Q(
         id: 'L07',
         cat: Cat.levhalar,
         correct: 3,
         text: '"Sollama Yasaktır" levhası hangi araçlar için geçerlidir?',
-        opts: [
-          'Sadece kamyon',
-          'Sadece otobüs',
-          'Sadece motorsiklet',
-          'Tüm araçlar',
-        ],
-        explanation:
-            'Sollama yasağı levhası geçerli olduğu bölgede tüm araçların sollamasını yasaklar.',
+        opts: ['Sadece kamyon', 'Sadece otobüs', 'Sadece motorsiklet', 'Tüm araçlar'],
+        explanation: 'Sollama yasağı levhası geçerli olduğu bölgede tüm araçların sollamasını yasaklar.',
       ),
       Q(
         id: 'L08',
         cat: Cat.levhalar,
         correct: 1,
         text: '"Azami Hız Sonu" levhası neyi gösterir?',
-        opts: [
-          'Yeni bir hız sınırı başlar',
-          'Önceki hız kısıtlaması sona erer',
-          'Park yasağı biter',
-          'Sollama serbest olur',
-        ],
+        opts: ['Yeni bir hız sınırı başlar', 'Önceki hız kısıtlaması sona erer', 'Park yasağı biter', 'Sollama serbest olur'],
         explanation:
             'Azami hız sonu levhası (gri çizgili daire) o bölge için konulan hız kısıtlamasının sona erdiğini gösterir.',
       ),
@@ -904,48 +775,32 @@ class QB {
         cat: Cat.levhalar,
         correct: 2,
         text: 'Sarı (amber) renk trafik ışığı ne anlama gelir?',
-        opts: [
-          'Geçebilirsiniz',
-          'Durabilirsiniz',
-          'Durun, kırmızıya hazırlanın',
-          'Yavaşlayın ve geçin',
-        ],
-        explanation:
-            'Sarı ışık "dur" komutuna hazırlık sinyalidir; güvenle durabileceğiniz durumda durulmalıdır.',
+        opts: ['Geçebilirsiniz', 'Durabilirsiniz', 'Durun, kırmızıya hazırlanın', 'Yavaşlayın ve geçin'],
+        explanation: 'Sarı ışık "dur" komutuna hazırlık sinyalidir; güvenle durabileceğiniz durumda durulmalıdır.',
       ),
       Q(
         id: 'L10',
         cat: Cat.levhalar,
         correct: 0,
-        text:
-            'Okul geçidi uyarı levhasının üzerinde genellikle ne sembolü bulunur?',
+        text: 'Okul geçidi uyarı levhasının üzerinde genellikle ne sembolü bulunur?',
         opts: ['Çocuk figürü', 'Araba', 'Yaya yürüyen figür', 'Bisiklet'],
-        explanation:
-            'Okul geçidi uyarı levhasında koşan veya yürüyen çocuk figürü yer alır.',
+        explanation: 'Okul geçidi uyarı levhasında koşan veya yürüyen çocuk figürü yer alır.',
       ),
       Q(
         id: 'L11',
         cat: Cat.levhalar,
         correct: 3,
-        text:
-            '"Taşıt giremez" levhası yuvarlak içinde ne görüntüsüne sahiptir?',
+        text: '"Taşıt giremez" levhası yuvarlak içinde ne görüntüsüne sahiptir?',
         opts: ['Araba silüeti', 'Yaya figürü', 'Bisiklet', 'Yatay beyaz çubuk'],
-        explanation:
-            '"Taşıt giremez" levhası kırmızı çerçeveli yuvarlak içinde yatay beyaz çubuk ile gösterilir.',
+        explanation: '"Taşıt giremez" levhası kırmızı çerçeveli yuvarlak içinde yatay beyaz çubuk ile gösterilir.',
       ),
       Q(
         id: 'L12',
         cat: Cat.levhalar,
         correct: 1,
         text: 'Turuncu-sarı arka plaka paneli ne anlama gelir?',
-        opts: [
-          'Okul servisi',
-          'Tehlikeli madde taşıyan araç',
-          'Kamu taşıtı',
-          'Özel araç',
-        ],
-        explanation:
-            'Turuncu-sarı dikdörtgen panel tehlikeli madde (ADR) taşıyan araçlarda zorunlu olarak kullanılır.',
+        opts: ['Okul servisi', 'Tehlikeli madde taşıyan araç', 'Kamu taşıtı', 'Özel araç'],
+        explanation: 'Turuncu-sarı dikdörtgen panel tehlikeli madde (ADR) taşıyan araçlarda zorunlu olarak kullanılır.',
       ),
 
       // ── ARAÇ TEKNİĞİ ───────────────────────────────────────────
@@ -954,40 +809,23 @@ class QB {
         cat: Cat.aracTeknik,
         correct: 1,
         text: 'ABS sistemi ne işe yarar?',
-        opts: [
-          'Motor gücü artırır',
-          'Frende tekerlek kilitlenmesini önler',
-          'Yakıt tasarrufu sağlar',
-          'Direksiyon sertleştirir',
-        ],
-        explanation:
-            'ABS (Anti-lock Braking System) fren sırasında tekerleğin kilitlenmesini önler; araç kontrol edilebilir kalır.',
+        opts: ['Motor gücü artırır', 'Frende tekerlek kilitlenmesini önler', 'Yakıt tasarrufu sağlar', 'Direksiyon sertleştirir'],
+        explanation: 'ABS (Anti-lock Braking System) fren sırasında tekerleğin kilitlenmesini önler; araç kontrol edilebilir kalır.',
       ),
       Q(
         id: 'AT02',
         cat: Cat.aracTeknik,
         correct: 1,
         text: 'ESP sistemi ne işe yarar?',
-        opts: [
-          'Yakıt pompalar',
-          'Aracı yolda dengede tutar',
-          'Motoru soğutur',
-          'Freni güçlendirir',
-        ],
-        explanation:
-            'ESP (Electronic Stability Program) virajda veya kaygan zeminde aracın dengesini elektronik olarak korur.',
+        opts: ['Yakıt pompalar', 'Aracı yolda dengede tutar', 'Motoru soğutur', 'Freni güçlendirir'],
+        explanation: 'ESP (Electronic Stability Program) virajda veya kaygan zeminde aracın dengesini elektronik olarak korur.',
       ),
       Q(
         id: 'AT03',
         cat: Cat.aracTeknik,
         correct: 2,
         text: 'Lastik basıncı düşük olduğunda ne olur?',
-        opts: [
-          'Yakıt tasarrufu artar',
-          'Frenleme kısalır',
-          'Lastik ısınır ve patlama riski artar',
-          'Araç stabilleşir',
-        ],
+        opts: ['Yakıt tasarrufu artar', 'Frenleme kısalır', 'Lastik ısınır ve patlama riski artar', 'Araç stabilleşir'],
         explanation:
             'Düşük lastik basıncı sürtünmeyi artırır; lastik aşırı ısınır, aşınma hızlanır ve patlama riski doğar.',
       ),
@@ -1005,12 +843,7 @@ class QB {
         cat: Cat.aracTeknik,
         correct: 3,
         text: 'Güç direksiyonu (servo) pompa sesi artmışsa ne yapılmalıdır?',
-        opts: [
-          'Normal kabul edilir',
-          'Gaz açılır',
-          'Hız artırılır',
-          'Servo sıvısı kontrol edilir',
-        ],
+        opts: ['Normal kabul edilir', 'Gaz açılır', 'Hız artırılır', 'Servo sıvısı kontrol edilir'],
         explanation:
             'Servo pompa sesinin artması direksiyon hidrolik sıvısının azaldığına işaret eder; servis sıvısı kontrol edilmelidir.',
       ),
@@ -1028,14 +861,8 @@ class QB {
         cat: Cat.aracTeknik,
         correct: 2,
         text: 'Araçtaki OBD (On-Board Diagnostics) sistemi ne işe yarar?',
-        opts: [
-          'Yol tarifi yapar',
-          'Müzik çalar',
-          'Motor arızalarını kaydeder ve teşhis eder',
-          'Hız sınırlar',
-        ],
-        explanation:
-            'OBD sistemi araç bilgisayarının sensör verilerini izleyip arıza kodlarını kaydetmesine olanak tanır.',
+        opts: ['Yol tarifi yapar', 'Müzik çalar', 'Motor arızalarını kaydeder ve teşhis eder', 'Hız sınırlar'],
+        explanation: 'OBD sistemi araç bilgisayarının sensör verilerini izleyip arıza kodlarını kaydetmesine olanak tanır.',
       ),
       Q(
         id: 'AT08',
@@ -1048,34 +875,22 @@ class QB {
           'Yalnızca 100.000 km\'de bir',
           'Hiç gerekmez',
         ],
-        explanation:
-            'Rot-balans ayarı lastik değişiminde, sert çukur veya darbeden sonra ve yılda en az bir kez yaptırılmalıdır.',
+        explanation: 'Rot-balans ayarı lastik değişiminde, sert çukur veya darbeden sonra ve yılda en az bir kez yaptırılmalıdır.',
       ),
       Q(
         id: 'AT09',
         cat: Cat.aracTeknik,
         correct: 3,
         text: 'Klima gazı dolumu için yetkili kişi kim olmalıdır?',
-        opts: [
-          'Herkes',
-          'Sadece sürücü',
-          'Yalnızca sigortacı',
-          'Yetkili servis teknisyeni',
-        ],
-        explanation:
-            'Klima gazı F-gazlar sınıfındadır; yalnızca sertifikalı ve yetkili teknisyenler dolum yapabilir.',
+        opts: ['Herkes', 'Sadece sürücü', 'Yalnızca sigortacı', 'Yetkili servis teknisyeni'],
+        explanation: 'Klima gazı F-gazlar sınıfındadır; yalnızca sertifikalı ve yetkili teknisyenler dolum yapabilir.',
       ),
       Q(
         id: 'AT10',
         cat: Cat.aracTeknik,
         correct: 1,
         text: 'Hidrolik fren sisteminde hava kabarcığı oluşursa ne olur?',
-        opts: [
-          'Fren güçlenir',
-          'Fren performansı düşer, pedal yere iner',
-          'Direksiyon kilitlenir',
-          'Motor söner',
-        ],
+        opts: ['Fren güçlenir', 'Fren performansı düşer, pedal yere iner', 'Direksiyon kilitlenir', 'Motor söner'],
         explanation:
             'Hava kabarcığı fren hidroliğinin basıncını etkiler; pedalın yere kadar inmesine ve fren gücünün azalmasına neden olur.',
       ),
@@ -1086,26 +901,15 @@ class QB {
         cat: Cat.ceza,
         correct: 1,
         text: 'Kırmızı ışık ihlali yapan sürücüye ne uygulanır?',
-        opts: [
-          'Sadece uyarı',
-          'İdari para cezası ve ehliyet puanı',
-          'Ehliyet iptali',
-          'Araç müsaderesi',
-        ],
-        explanation:
-            'Kırmızı ışık ihlalinde hem idari para cezası hem de ehliyete ceza puanı uygulanır.',
+        opts: ['Sadece uyarı', 'İdari para cezası ve ehliyet puanı', 'Ehliyet iptali', 'Araç müsaderesi'],
+        explanation: 'Kırmızı ışık ihlalinde hem idari para cezası hem de ehliyete ceza puanı uygulanır.',
       ),
       Q(
         id: 'C02',
         cat: Cat.ceza,
         correct: 1,
         text: 'Emniyet kemeri takmayan sürücüye ne uygulanır?',
-        opts: [
-          'Sadece uyarı',
-          'İdari para cezası',
-          'Ehliyet iptali',
-          'Ceza puanı ve araç çekme',
-        ],
+        opts: ['Sadece uyarı', 'İdari para cezası', 'Ehliyet iptali', 'Ceza puanı ve araç çekme'],
         explanation: 'Emniyet kemeri takmamak idari para cezasını gerektirir.',
       ),
       Q(
@@ -1113,28 +917,16 @@ class QB {
         cat: Cat.ceza,
         correct: 2,
         text: 'Alkollü araç kullanmanın cezası nedir?',
-        opts: [
-          'Sadece para',
-          'Sadece ehliyet',
-          'Para + ehliyet geri alma + adli işlem',
-          'Sadece uyarı',
-        ],
-        explanation:
-            'Alkollü araç kullanmak para cezası, ehliyetin geçici geri alınması ve adli kovuşturmayı birlikte getirir.',
+        opts: ['Sadece para', 'Sadece ehliyet', 'Para + ehliyet geri alma + adli işlem', 'Sadece uyarı'],
+        explanation: 'Alkollü araç kullanmak para cezası, ehliyetin geçici geri alınması ve adli kovuşturmayı birlikte getirir.',
       ),
       Q(
         id: 'C04',
         cat: Cat.ceza,
         correct: 3,
         text: 'Hız sınırını %30\'dan fazla aşmanın yaptırımı nedir?',
-        opts: [
-          'Sadece uyarı',
-          'Para cezası',
-          'Para + 10 puan',
-          'Para + puan + ehliyet askıya alma',
-        ],
-        explanation:
-            'Hız sınırını %30\'dan fazla aşmak para cezası, ceza puanı ve ehliyetin askıya alınmasını gerektirir.',
+        opts: ['Sadece uyarı', 'Para cezası', 'Para + 10 puan', 'Para + puan + ehliyet askıya alma'],
+        explanation: 'Hız sınırını %30\'dan fazla aşmak para cezası, ceza puanı ve ehliyetin askıya alınmasını gerektirir.',
       ),
       Q(
         id: 'C05',
@@ -1142,20 +934,14 @@ class QB {
         correct: 0,
         text: 'Ehliyette kaç ceza puanı birikince ehliyet geri alınır?',
         opts: ['100 puan', '50 puan', '75 puan', '200 puan'],
-        explanation:
-            'Türkiye\'de 2 yıl içinde 100 ceza puanı biriken sürücülerin ehliyeti geri alınır.',
+        explanation: 'Türkiye\'de 2 yıl içinde 100 ceza puanı biriken sürücülerin ehliyeti geri alınır.',
       ),
       Q(
         id: 'C06',
         cat: Cat.ceza,
         correct: 2,
         text: 'Trafik sigortasız araç kullananın cezası nedir?',
-        opts: [
-          'Sadece uyarı',
-          'Yalnızca para cezası',
-          'Para cezası + araç trafikten men',
-          'Ehliyet iptali',
-        ],
+        opts: ['Sadece uyarı', 'Yalnızca para cezası', 'Para cezası + araç trafikten men', 'Ehliyet iptali'],
         explanation:
             'Zorunlu trafik sigortası (MTPL) olmadan araç kullanmak para cezası ve aracın trafikten men edilmesini gerektirir.',
       ),
@@ -1164,54 +950,31 @@ class QB {
         cat: Cat.ceza,
         correct: 1,
         text: 'Araç muayenesi yaptırılmazsa ceza var mıdır?',
-        opts: [
-          'Hayır',
-          'Evet, para cezası ve trafikten men',
-          'Yalnızca uyarı',
-          'Sadece sigorta artar',
-        ],
-        explanation:
-            'Muayene süresi geçmiş araç para cezasına ve aracın trafikten men edilmesine yol açar.',
+        opts: ['Hayır', 'Evet, para cezası ve trafikten men', 'Yalnızca uyarı', 'Sadece sigorta artar'],
+        explanation: 'Muayene süresi geçmiş araç para cezasına ve aracın trafikten men edilmesine yol açar.',
       ),
       Q(
         id: 'C08',
         cat: Cat.ceza,
         correct: 3,
         text: 'Telefon tutarak araç kullanan sürücüye ne uygulanır?',
-        opts: [
-          'Uyarı',
-          'Sadece puan',
-          'Yalnızca para',
-          'Para cezası ve ceza puanı',
-        ],
-        explanation:
-            'Eller serbest cihaz olmaksızın telefon tutarak araç kullanmak hem para cezası hem de ceza puanı gerektirir.',
+        opts: ['Uyarı', 'Sadece puan', 'Yalnızca para', 'Para cezası ve ceza puanı'],
+        explanation: 'Eller serbest cihaz olmaksızın telefon tutarak araç kullanmak hem para cezası hem de ceza puanı gerektirir.',
       ),
       Q(
         id: 'C09',
         cat: Cat.ceza,
         correct: 2,
         text: 'Yasal hız sınırını %10 aşan sürücüye ne olur?',
-        opts: [
-          'Hiçbir şey',
-          'Ehliyet iptali',
-          'İdari para cezası',
-          'Araç bağlatılır',
-        ],
-        explanation:
-            'Hız sınırının %10 aşılması hafif ihlal sayılır ve idari para cezasıyla sonuçlanır.',
+        opts: ['Hiçbir şey', 'Ehliyet iptali', 'İdari para cezası', 'Araç bağlatılır'],
+        explanation: 'Hız sınırının %10 aşılması hafif ihlal sayılır ve idari para cezasıyla sonuçlanır.',
       ),
       Q(
         id: 'C10',
         cat: Cat.ceza,
         correct: 0,
         text: 'Trafik kazasında kaçan sürücüye ne uygulanır?',
-        opts: [
-          'Ağır para cezası + hapis cezası riski',
-          'Sadece uyarı',
-          'Yalnızca tazminat',
-          'Para cezası',
-        ],
+        opts: ['Ağır para cezası + hapis cezası riski', 'Sadece uyarı', 'Yalnızca tazminat', 'Para cezası'],
         explanation:
             'Kaza yapıp kaçmak Türk Ceza Kanunu kapsamında ağır yaptırım (para cezası ve hapis riski) gerektirir.',
       ),
@@ -1222,12 +985,7 @@ class QB {
         cat: Cat.cevresel,
         correct: 1,
         text: 'Araçların CO2 emisyonunu azaltmanın en etkili yolu nedir?',
-        opts: [
-          'Klima kullanmak',
-          'Ekonomik sürüş ve bakım',
-          'Daha fazla yakıt kullanmak',
-          'Rölantide beklemek',
-        ],
+        opts: ['Klima kullanmak', 'Ekonomik sürüş ve bakım', 'Daha fazla yakıt kullanmak', 'Rölantide beklemek'],
         explanation:
             'Ekonomik sürüş (düşük RPM, anlık duruşlarda motor kapatma) ve düzenli bakım CO2 salınımını önemli ölçüde azaltır.',
       ),
@@ -1236,54 +994,31 @@ class QB {
         cat: Cat.cevresel,
         correct: 2,
         text: 'Araç bakımı yapılmadığında çevreye etkisi nedir?',
-        opts: [
-          'Etkisi yoktur',
-          'Emisyon azalır',
-          'Emisyon ve kirlilik artar',
-          'Yakıt tasarrufu olur',
-        ],
-        explanation:
-            'Bakımsız araçlar kirli yanma yaparak egzozdan daha fazla zararlı gaz (NOx, HC) yayar.',
+        opts: ['Etkisi yoktur', 'Emisyon azalır', 'Emisyon ve kirlilik artar', 'Yakıt tasarrufu olur'],
+        explanation: 'Bakımsız araçlar kirli yanma yaparak egzozdan daha fazla zararlı gaz (NOx, HC) yayar.',
       ),
       Q(
         id: 'CE03',
         cat: Cat.cevresel,
         correct: 0,
         text: 'Araç lastiği imhasında en doğru yöntem nedir?',
-        opts: [
-          'Yetkili geri dönüşüm merkezine teslim',
-          'Yakılır',
-          'Toprağa gömülür',
-          'Suya atılır',
-        ],
-        explanation:
-            'Kullanım ömrü dolan lastikler yetkili atık lastik geri dönüşüm merkezlerine teslim edilmelidir.',
+        opts: ['Yetkili geri dönüşüm merkezine teslim', 'Yakılır', 'Toprağa gömülür', 'Suya atılır'],
+        explanation: 'Kullanım ömrü dolan lastikler yetkili atık lastik geri dönüşüm merkezlerine teslim edilmelidir.',
       ),
       Q(
         id: 'CE04',
         cat: Cat.cevresel,
         correct: 3,
         text: 'Düşük hızlarda sürüş yakıt tüketimini nasıl etkiler?',
-        opts: [
-          'Artırır',
-          'Değiştirmez',
-          'Çok azaltır',
-          'Motorun verimli çalıştığı aralığa bağlıdır',
-        ],
-        explanation:
-            'En düşük yakıt tüketimi genellikle 80-90 km/h aralığında gerçekleşir; bu altı ve üstünde tüketim artar.',
+        opts: ['Artırır', 'Değiştirmez', 'Çok azaltır', 'Motorun verimli çalıştığı aralığa bağlıdır'],
+        explanation: 'En düşük yakıt tüketimi genellikle 80-90 km/h aralığında gerçekleşir; bu altı ve üstünde tüketim artar.',
       ),
       Q(
         id: 'CE05',
         cat: Cat.cevresel,
         correct: 1,
         text: 'Motor rölantide (boşta) çalıştırmanın çevreye etkisi nedir?',
-        opts: [
-          'Olumlu etki',
-          'Gereksiz emisyon ve yakıt israfı',
-          'Motoru korur',
-          'Yağı ısıtır, iyidir',
-        ],
+        opts: ['Olumlu etki', 'Gereksiz emisyon ve yakıt israfı', 'Motoru korur', 'Yağı ısıtır, iyidir'],
         explanation:
             'Modern araçlarda uzun süreli rölanti gereksiz yakıt harcar ve emisyon üretir; modern motorlar hemen çalışabilir.',
       ),
@@ -1292,14 +1027,8 @@ class QB {
         cat: Cat.cevresel,
         correct: 2,
         text: 'Elektrikli araçlar şehir içinde çevresel avantaj sağlar çünkü:',
-        opts: [
-          'Daha hızlıdır',
-          'Daha ucuzdur',
-          'Egzoz emisyonu yoktur',
-          'Bakım gerektirmez',
-        ],
-        explanation:
-            'Elektrikli araçlar şehir içinde egzoz gazı üretmez; böylece hava kalitesine doğrudan katkı sağlar.',
+        opts: ['Daha hızlıdır', 'Daha ucuzdur', 'Egzoz emisyonu yoktur', 'Bakım gerektirmez'],
+        explanation: 'Elektrikli araçlar şehir içinde egzoz gazı üretmez; böylece hava kalitesine doğrudan katkı sağlar.',
       ),
       Q(
         id: 'CE07',
@@ -1307,8 +1036,7 @@ class QB {
         correct: 0,
         text: 'Araç kliması kapatıldığında yakıt tüketimine etkisi nedir?',
         opts: ['%5-15 oranında azalır', 'Artış olur', 'Değişmez', '%30 azalır'],
-        explanation:
-            'Klima kompresörü yaklaşık %5-15 oranında ek yakıt tüketimine yol açar; kapatmak tasarruf sağlar.',
+        explanation: 'Klima kompresörü yaklaşık %5-15 oranında ek yakıt tüketimine yol açar; kapatmak tasarruf sağlar.',
       ),
     ];
   }
@@ -1340,357 +1068,6 @@ class QB {
     return result;
   }
 }
-
-// ══════════════════════════════════════════════════════════════════
-//  TRAFFIC SIGNS DATABASE (60 levha)
-// ══════════════════════════════════════════════════════════════════
-const List<Sign> signs = [
-  // YASAK
-  Sign(
-    'Girilmez',
-    'İşaret edilen yöne araç ile girilemez.',
-    '🚫',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Park Yapılmaz',
-    'Bu levha sınırları içinde park etmek yasaktır.',
-    '🅿️',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Sollama Yasak',
-    'Geçerliyken sağdaki araçları sollamak yasaktır.',
-    '🚗',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Dönüş Yasak (Sol)',
-    'Levhanın gösterdiği yönde dönüş yasaktır.',
-    '↩️',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'U Dönüşü Yasak',
-    'U dönüşü yapmak bu bölgede yasaktır.',
-    '🔄',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Korna Yasak',
-    'Bu bölgede korna kullanmak yasaktır.',
-    '📢',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Bisiklet Giremez',
-    'Bisikletlerin bu yola girişi yasaktır.',
-    '🚲',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Yaya Giremez',
-    'Yayaların bu yola girişi yasaktır.',
-    '🚶',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Motorsiklet Yasak',
-    'Motorsikletlerin bu yola girişi yasaktır.',
-    '🏍️',
-    'Yasak',
-    'red',
-  ),
-  Sign(
-    'Ağırlık Sınırı',
-    'Bu levhadan ağır araçlar geçemez.',
-    '⚖️',
-    'Yasak',
-    'red',
-  ),
-  Sign('Hız Sınırı 30', '30 km/h azami hız uygulanır.', '🔵', 'Yasak', 'red'),
-  Sign('Hız Sınırı 50', '50 km/h azami hız uygulanır.', '🔵', 'Yasak', 'red'),
-  Sign('Hız Sınırı 70', '70 km/h azami hız uygulanır.', '🔵', 'Yasak', 'red'),
-  Sign('Hız Sınırı 90', '90 km/h azami hız uygulanır.', '🔵', 'Yasak', 'red'),
-  Sign('Hız Sınırı 120', '120 km/h azami hız uygulanır.', '🔵', 'Yasak', 'red'),
-
-  // UYARI
-  Sign(
-    'Dur',
-    'Sürücü tamamen durup yol güvenli olduğunda geçer.',
-    '🛑',
-    'Düzenleyici',
-    'orange',
-  ),
-  Sign(
-    'Yol Ver',
-    'Ana yoldan gelenlere geçiş hakkı tanınır.',
-    '⚠️',
-    'Düzenleyici',
-    'orange',
-  ),
-  Sign(
-    'Tehlikeli Viraj (Sağ)',
-    'İleride tehlikeli sağ viraj vardır.',
-    '↪️',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Tehlikeli Viraj (Sol)',
-    'İleride tehlikeli sol viraj vardır.',
-    '↩️',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Dik İniş',
-    'İleride dik bir iniş bulunmaktadır.',
-    '⬇️',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Dik Çıkış',
-    'İleride dik bir çıkış bulunmaktadır.',
-    '⬆️',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Demiryolu Geçidi',
-    'İleride hemzemin demiryolu geçidi vardır.',
-    '🚂',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Yaya Geçidi',
-    'İleride yaya geçidi bulunmaktadır.',
-    '🚶',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Okul Geçidi',
-    'İleride okul geçidi vardır, yavaşlayın.',
-    '🏫',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Kaygan Yol',
-    'İleride kaygan yol bölümü vardır.',
-    '⛸️',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign('Bozuk Yol', 'İleride yol yüzeyi bozuktur.', '🛤️', 'Uyarı', 'yellow'),
-  Sign(
-    'Kasis',
-    'İleride kasis (tümsek) bulunmaktadır.',
-    '〰️',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Düşen Taş',
-    'İleride taş düşme tehlikesi vardır.',
-    '🪨',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Yandan Rüzgar',
-    'İleride şiddetli yan rüzgar uyarısı.',
-    '💨',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Çocuklar',
-    'İleride oynayan çocuklar bulunabilir.',
-    '👦',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Hayvanlar',
-    'İleride yola çıkan hayvanlar olabilir.',
-    '🐄',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign(
-    'Trafik Işığı',
-    'İleride trafik ışığı sistemi bulunmaktadır.',
-    '🚦',
-    'Uyarı',
-    'yellow',
-  ),
-  Sign('Köprü', 'İleride köprü geçişi bulunmaktadır.', '🌉', 'Uyarı', 'yellow'),
-  Sign('Tünel', 'İleride tünel geçişi vardır.', '🚇', 'Uyarı', 'yellow'),
-
-  // ZORUNLULuk
-  Sign(
-    'Zorunlu Yön (Düz)',
-    'Sadece düz gidilebilir.',
-    '⬆️',
-    'Zorunluluk',
-    'blue',
-  ),
-  Sign(
-    'Zorunlu Yön (Sağ)',
-    'Sadece sağa dönülebilir.',
-    '➡️',
-    'Zorunluluk',
-    'blue',
-  ),
-  Sign(
-    'Zorunlu Yön (Sol)',
-    'Sadece sola dönülebilir.',
-    '⬅️',
-    'Zorunluluk',
-    'blue',
-  ),
-  Sign(
-    'Emniyet Kemeri',
-    'Emniyet kemeri takmak zorunludur.',
-    '🔒',
-    'Zorunluluk',
-    'blue',
-  ),
-  Sign(
-    'Kış Lastiği',
-    'Bu bölgede kış lastiği zorunludur.',
-    '❄️',
-    'Zorunluluk',
-    'blue',
-  ),
-  Sign(
-    'Dönel Kavşak',
-    'Dönel kavşak, sağdan gelenler öncelikli.',
-    '🔁',
-    'Zorunluluk',
-    'blue',
-  ),
-  Sign(
-    'Min. Hız 60',
-    'Asgari 60 km/h hızda seyredilmelidir.',
-    '💨',
-    'Zorunluluk',
-    'blue',
-  ),
-
-  // BİLGİ
-  Sign(
-    'İlk Yardım',
-    'İleride ilk yardım (sağlık) noktası vardır.',
-    '🏥',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Otoyol Başlangıcı',
-    'Otoyol başlar; kurallara uyunuz.',
-    '🛣️',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Otoyol Sonu',
-    'Otoyol biter; hız ayarını yapınız.',
-    '🏁',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Park Yeri',
-    'Park alanı bu yönde yer almaktadır.',
-    '🅿️',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Servis İstasyonu',
-    'Yakın çevrede akaryakıt istasyonu vardır.',
-    '⛽',
-    'Bilgi',
-    'green',
-  ),
-  Sign('Telefon', 'Yakında telefon bulunmaktadır.', '📞', 'Bilgi', 'green'),
-  Sign(
-    'Dinlenme Alanı',
-    'İleride dinlenme alanı bulunmaktadır.',
-    '🏕️',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Turizm Bilgi',
-    'Yakında turizm bilgi noktası vardır.',
-    'ℹ️',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Demiryolu İstasyonu',
-    'Yakında tren istasyonu yer almaktadır.',
-    '🚉',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Havalimanı',
-    'Yakında havalimanı yer almaktadır.',
-    '✈️',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Liman',
-    'Yakında liman veya iskele yer almaktadır.',
-    '⚓',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Hız Sonu',
-    'Önceki hız kısıtlaması bu noktada sona erer.',
-    '🔓',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Sollama Serbest',
-    'Sollama yasağı bu noktada sona erer.',
-    '✅',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Ana Yol Başlangıcı',
-    'Ana yol başlar; geçiş önceliği sizde.',
-    '🛣️',
-    'Bilgi',
-    'green',
-  ),
-  Sign(
-    'Çift Yönlü Trafik',
-    'Bu yolda çift yönlü trafik vardır.',
-    '↔️',
-    'Bilgi',
-    'green',
-  ),
-];
 
 // ══════════════════════════════════════════════════════════════════
 //  STATE MANAGEMENT
@@ -1954,7 +1331,7 @@ class MainShell extends StatelessWidget {
           HomeScreen(s: s),
           CategoryScreen(s: s),
           ExamScreen(s: s),
-          SignsScreen(s: s),
+          const SignCategoryListScreen(),
           ProfileScreen(s: s),
         ];
         return Scaffold(
@@ -3375,8 +2752,9 @@ class _RealExamState extends State<RealExamScreen> {
       if (_remaining <= 0) {
         t.cancel();
         _finish();
-      } else
+      } else {
         setState(() => _remaining--);
+      }
     });
   }
 
@@ -3506,12 +2884,13 @@ class _RealExamState extends State<RealExamScreen> {
               itemCount: _qs.length,
               itemBuilder: (_, i) {
                 Color c;
-                if (i == _idx)
+                if (i == _idx) {
                   c = C.primary;
-                else if (_ans.containsKey(i))
+                } else if (_ans.containsKey(i)) {
                   c = C.ok;
-                else
+                } else {
                   c = C.cardHi;
+                }
                 return GestureDetector(
                   onTap: () => setState(() => _idx = i),
                   child: AnimatedContainer(
@@ -3952,579 +3331,6 @@ class _RT extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════
-//  SIGNS SCREEN
-// ══════════════════════════════════════════════════════════════════
-class SignsScreen extends StatefulWidget {
-  final AppState s;
-  const SignsScreen({super.key, required this.s});
-  @override
-  State<SignsScreen> createState() => _SignsState();
-}
-
-class _SignsState extends State<SignsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tab;
-  String _filter = 'Tümü';
-  String _search = '';
-  int _qi = 0;
-  int? _qa;
-  bool _qanswered = false;
-  int _qcorrect = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
-
-  List<Sign> get _filtered {
-    var list = signs;
-    if (_filter != 'Tümü') list = list.where((s) => s.type == _filter).toList();
-    if (_search.isNotEmpty)
-      list = list
-          .where(
-            (s) =>
-                s.name.toLowerCase().contains(_search.toLowerCase()) ||
-                s.desc.toLowerCase().contains(_search.toLowerCase()),
-          )
-          .toList();
-    return list;
-  }
-
-  List<String> _quizOpts(int idx) {
-    final correct = signs[idx].name;
-    final others = List<int>.generate(signs.length, (i) => i)..remove(idx);
-    others.shuffle();
-    final opts = [correct, ...others.take(3).map((i) => signs[i].name)]
-      ..shuffle();
-    return opts;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trafik Levhaları'),
-        bottom: TabBar(
-          controller: _tab,
-          tabs: const [
-            Tab(text: 'Tüm Levhalar'),
-            Tab(text: 'Kategoriler'),
-            Tab(text: 'Levha Quiz'),
-          ],
-          labelColor: C.pLight,
-          unselectedLabelColor: C.txt2,
-          indicatorColor: C.pLight,
-        ),
-      ),
-      body: TabBarView(
-        controller: _tab,
-        children: [_allSigns(), _catSigns(), _quiz()],
-      ),
-    );
-  }
-
-  Widget _allSigns() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            onChanged: (v) => setState(() => _search = v),
-            style: const TextStyle(color: C.txt),
-            decoration: InputDecoration(
-              hintText: 'Levha ara...',
-              hintStyle: const TextStyle(color: C.txt2),
-              prefixIcon: const Icon(Icons.search, color: C.txt2),
-              filled: true,
-              fillColor: C.card,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(12),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: .88,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _filtered.length,
-            itemBuilder: (_, i) {
-              final sg = _filtered[i];
-              final borderColor = sg.color == 'red'
-                  ? C.errLight
-                  : sg.color == 'yellow'
-                  ? C.warn
-                  : sg.color == 'blue'
-                  ? C.pLight
-                  : sg.color == 'orange'
-                  ? C.accent
-                  : C.okLight;
-              return GestureDetector(
-                onTap: () => _showDetail(context, sg),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    color: C.card,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: borderColor.withOpacity(.4)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: borderColor.withOpacity(.1),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(sg.emoji, style: const TextStyle(fontSize: 44)),
-                      const SizedBox(height: 8),
-                      Text(
-                        sg.name,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: C.txt,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: borderColor.withOpacity(.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          sg.type,
-                          style: TextStyle(
-                            color: borderColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _catSigns() {
-    const types = [
-      'Tümü',
-      'Yasak',
-      'Düzenleyici',
-      'Uyarı',
-      'Zorunluluk',
-      'Bilgi',
-    ];
-    return Column(
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: types
-                .map(
-                  (t) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _filter = t),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _filter == t ? C.primary : C.card,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _filter == t ? C.pLight : C.cardHi,
-                          ),
-                        ),
-                        child: Text(
-                          t,
-                          style: TextStyle(
-                            color: _filter == t ? Colors.white : C.txt2,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: _filtered.length,
-            itemBuilder: (_, i) {
-              final sg = _filtered[i];
-              return GestureDetector(
-                onTap: () => _showDetail(context, sg),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: C.card,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(sg.emoji, style: const TextStyle(fontSize: 40)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              sg.name,
-                              style: const TextStyle(
-                                color: C.txt,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              sg.desc,
-                              style: const TextStyle(
-                                color: C.txt2,
-                                fontSize: 12,
-                                height: 1.4,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.info_outline, color: C.txt2, size: 18),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _quiz() {
-    if (_qi >= signs.length) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🏆', style: TextStyle(fontSize: 72)),
-            const SizedBox(height: 16),
-            const Text(
-              'Quiz Tamamlandı!',
-              style: TextStyle(
-                color: C.txt,
-                fontWeight: FontWeight.w900,
-                fontSize: 24,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$_qcorrect/${signs.length} doğru cevap',
-              style: const TextStyle(color: C.pLight, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${(_qcorrect / signs.length * 100).toStringAsFixed(0)}% Başarı',
-              style: const TextStyle(
-                color: C.aLight,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 28),
-            ElevatedButton.icon(
-              onPressed: () => setState(() {
-                _qi = 0;
-                _qa = null;
-                _qanswered = false;
-                _qcorrect = 0;
-              }),
-              icon: const Icon(Icons.refresh),
-              label: const Text(
-                'Tekrar Başla',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: C.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    final sg = signs[_qi];
-    final opts = _quizOpts(_qi);
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${_qi + 1}/${signs.length}',
-                style: const TextStyle(color: C.txt2),
-              ),
-              Text(
-                '$_qcorrect doğru',
-                style: const TextStyle(
-                  color: C.okLight,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: _qi / signs.length,
-              minHeight: 5,
-              backgroundColor: C.cardHi,
-              valueColor: const AlwaysStoppedAnimation(C.pLight),
-            ),
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Bu levhanın adı nedir?',
-            style: TextStyle(color: C.txt2, fontSize: 16),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: 130,
-            height: 130,
-            decoration: BoxDecoration(
-              color: C.card,
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: [
-                BoxShadow(color: C.pLight.withOpacity(.15), blurRadius: 20),
-              ],
-            ),
-            child: Center(
-              child: Text(sg.emoji, style: const TextStyle(fontSize: 76)),
-            ),
-          ),
-          const SizedBox(height: 28),
-          ...opts.map((opt) {
-            final isCorrect = opt == sg.name;
-            Color bg = C.cardHi;
-            Color border = Colors.transparent;
-            if (_qanswered) {
-              if (isCorrect) {
-                bg = C.ok.withOpacity(.2);
-                border = C.okLight;
-              } else if (_qa != null && opts[_qa!] == opt && !isCorrect) {
-                bg = C.err.withOpacity(.2);
-                border = C.errLight;
-              }
-            }
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
-                onTap: () {
-                  if (_qanswered) return;
-                  final idx = opts.indexOf(opt);
-                  setState(() {
-                    _qa = idx;
-                    _qanswered = true;
-                    if (opt == sg.name) _qcorrect++;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 15,
-                    horizontal: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: border, width: 2),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          opt,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: C.txt,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      if (_qanswered && isCorrect)
-                        const Icon(Icons.check_circle, color: C.okLight),
-                      if (_qanswered &&
-                          _qa != null &&
-                          opts[_qa!] == opt &&
-                          !isCorrect)
-                        const Icon(Icons.cancel, color: C.errLight),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-          if (_qanswered) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => setState(() {
-                  _qi++;
-                  _qa = null;
-                  _qanswered = false;
-                }),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: C.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  _qi < signs.length - 1 ? 'Sonraki Levha →' : 'Sonucu Gör',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _showDetail(BuildContext ctx, Sign sg) {
-    final borderColor = sg.color == 'red'
-        ? C.errLight
-        : sg.color == 'yellow'
-        ? C.warn
-        : sg.color == 'blue'
-        ? C.pLight
-        : sg.color == 'orange'
-        ? C.accent
-        : C.okLight;
-    showModalBottomSheet(
-      context: ctx,
-      backgroundColor: C.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: borderColor.withOpacity(.1),
-                border: Border.all(color: borderColor, width: 3),
-              ),
-              child: Center(
-                child: Text(sg.emoji, style: const TextStyle(fontSize: 54)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              sg.name,
-              style: const TextStyle(
-                color: C.txt,
-                fontWeight: FontWeight.w900,
-                fontSize: 22,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: borderColor.withOpacity(.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                sg.type,
-                style: TextStyle(
-                  color: borderColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              sg.desc,
-              style: const TextStyle(color: C.txt2, fontSize: 15, height: 1.6),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 28),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════
 //  PROFILE SCREEN
 // ══════════════════════════════════════════════════════════════════
 class ProfileScreen extends StatelessWidget {
@@ -4802,7 +3608,7 @@ class _ExamSummary extends StatelessWidget {
   const _ExamSummary({required this.s});
   @override
   Widget build(BuildContext context) {
-    if (s.history.isEmpty)
+    if (s.history.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -4816,6 +3622,7 @@ class _ExamSummary extends StatelessWidget {
           ),
         ),
       );
+    }
     final pass = s.history.where((r) => r.passed).length;
     final avg =
         s.history.map((r) => r.score).reduce((a, b) => a + b) /
@@ -5081,3 +3888,1550 @@ PageRouteBuilder _slideRoute(Widget page) => PageRouteBuilder(
     child: child,
   ),
 );
+
+// ══════════════════════════════════════════════════════════════════
+//  KÜÇÜK ORTAK WIDGET'LAR  (Trafik Levhaları bölümü için)
+// ══════════════════════════════════════════════════════════════════
+
+/// Gerçek reklam SDK'sı entegre edilmediği için basit bir yer tutucu.
+/// İleride bir reklam paketi eklenirse bu widget'ın içini doldurmak yeterli.
+class BannerAdWidget extends StatelessWidget {
+  const BannerAdWidget({super.key});
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+enum OptionState { idle, selected, correct, wrong }
+
+class OptionTile extends StatelessWidget {
+  final String label;
+  final String text;
+  final OptionState state;
+  final bool isDark;
+  final VoidCallback onTap;
+  const OptionTile({
+    super.key,
+    required this.label,
+    required this.text,
+    required this.state,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  Color get _bg {
+    switch (state) {
+      case OptionState.correct:
+        return kSuccess.withOpacity(.18);
+      case OptionState.wrong:
+        return kDanger.withOpacity(.18);
+      case OptionState.selected:
+        return kPrimary.withOpacity(.18);
+      case OptionState.idle:
+        return isDark ? kCard : Colors.white;
+    }
+  }
+
+  Color get _border {
+    switch (state) {
+      case OptionState.correct:
+        return kSuccess;
+      case OptionState.wrong:
+        return kDanger;
+      case OptionState.selected:
+        return kPrimary;
+      case OptionState.idle:
+        return isDark ? kBorder : const Color(0xFFE4E6EC);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: _bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _border, width: 1.6),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _border.withOpacity(.15),
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: ts(size: 12, w: FontWeight.w800, color: _border),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: ts(
+                  size: 13.5,
+                  w: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ),
+            if (state == OptionState.correct)
+              const Icon(Icons.check_circle_rounded, color: kSuccess, size: 20),
+            if (state == OptionState.wrong)
+              const Icon(Icons.cancel_rounded, color: kDanger, size: 20),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// ------------------------------------------------------------
+//  SECTION: models/sign_shape.dart
+// ------------------------------------------------------------
+
+/// Levhanın görsel formunu belirler. Gerçek görsel/ikon dosyası
+/// kullanmadan, şekil + renk + ikon kombinasyonuyla tanınabilir
+/// bir levha çizilir.
+enum SignShape {
+  triangle,        // Tehlike uyarı: beyaz zemin, kırmızı kenarlı üçgen
+  invertedTriangle, // Yol ver: baş aşağı üçgen
+  octagon,          // Dur: kırmızı zemin, sekizgen
+  circleRed,        // Yasaklama/tanzim: beyaz zemin, kırmızı kalın çerçeve
+  circleBlue,       // Mecburi yön / bilgi (dairesel): mavi zemin, beyaz ikon
+  squareBlue,       // Bilgi işareti: mavi kare/dikdörtgen zemin
+  diamondYellow,    // Geçici/yol çalışması işareti: sarı-turuncu eşkenar dörtgen
+}
+
+// ------------------------------------------------------------
+//  SECTION: models/traffic_sign.dart
+// ------------------------------------------------------------
+
+class TrafficSign {
+  final String id;         // benzersiz kod, örn. 'tt_002'
+  final String code;       // resmi kod, örn. 'TT-2'
+  final String category;   // kSignCategory* sabitlerinden biri
+  final String name;       // levhanın adı, örn. 'DUR'
+  final String meaning;     // kısa anlamı
+  final String whereUsed;  // nerede kullanılır
+  final SignShape shape;
+  final IconData icon;
+  final String? overlayText; // örn. DUR levhası için 'DUR', hız levhası için '50'
+
+  const TrafficSign({
+    required this.id,
+    required this.code,
+    required this.category,
+    required this.name,
+    required this.meaning,
+    required this.whereUsed,
+    required this.shape,
+    required this.icon,
+    this.overlayText,
+  });
+}
+
+// ------------------------------------------------------------
+//  SECTION: data/sign_categories.dart
+// ------------------------------------------------------------
+
+const String catSignTehlike = 'sign_tehlike';
+const String catSignTanzim = 'sign_tanzim';
+const String catSignYasak = 'sign_yasak';
+const String catSignMecburi = 'sign_mecburi';
+const String catSignBilgi = 'sign_bilgi';
+const String catSignPark = 'sign_park';
+const String catSignOtoyol = 'sign_otoyol';
+const String catSignYolCalisma = 'sign_yol_calisma';
+
+const Map<String, String> kSignCategoryTitles = {
+  catSignTehlike: 'Tehlike Uyarı',
+  catSignTanzim: 'Trafik Tanzim',
+  catSignYasak: 'Yasaklama',
+  catSignMecburi: 'Mecburi Yön',
+  catSignBilgi: 'Bilgi',
+  catSignPark: 'Duraklama / Park',
+  catSignOtoyol: 'Otoyol',
+  catSignYolCalisma: 'Yol Çalışması',
+};
+
+const Map<String, IconData> kSignCategoryIcons = {
+  catSignTehlike: Icons.warning_amber_rounded,
+  catSignTanzim: Icons.rule_rounded,
+  catSignYasak: Icons.block_rounded,
+  catSignMecburi: Icons.turn_right_rounded,
+  catSignBilgi: Icons.info_rounded,
+  catSignPark: Icons.local_parking_rounded,
+  catSignOtoyol: Icons.add_road_rounded,
+  catSignYolCalisma: Icons.construction_rounded,
+};
+
+const Map<String, Color> kSignCategoryColors = {
+  catSignTehlike: kWarning,
+  catSignTanzim: kNavyAccent,
+  catSignYasak: kDanger,
+  catSignMecburi: kPurple,
+  catSignBilgi: kTeal,
+  catSignPark: kPrimary,
+  catSignOtoyol: kSuccess,
+  catSignYolCalisma: Color(0xFFE07A2B),
+};
+
+// ------------------------------------------------------------
+//  SECTION: data/sign_bank.dart
+//  Bu içerikler, Türkiye'deki resmi trafik işaretleri kataloğunun
+//  (Karayolları Trafik Yönetmeliği eki) genel bilgilerine dayanan,
+//  özgün biçimde yazılmış eğitim amaçlı özetlerdir.
+// ------------------------------------------------------------
+
+class TrafficSignBank {
+  TrafficSignBank._();
+
+  static const List<TrafficSign> tehlike = [
+    TrafficSign(
+      id: 'th_001', code: 'TU-1', category: catSignTehlike,
+      name: 'Sağa Tehlikeli Viraj',
+      meaning: 'İleride sağa dönen tehlikeli bir viraj olduğunu bildirir.',
+      whereUsed: 'Görüş mesafesinin kısıtlı olduğu virajlı yollarda, viraja girmeden önce.',
+      shape: SignShape.triangle, icon: Icons.turn_slight_right_rounded,
+    ),
+    TrafficSign(
+      id: 'th_002', code: 'TU-2', category: catSignTehlike,
+      name: 'Sola Tehlikeli Viraj',
+      meaning: 'İleride sola dönen tehlikeli bir viraj olduğunu bildirir.',
+      whereUsed: 'Görüş mesafesinin kısıtlı olduğu virajlı yollarda, viraja girmeden önce.',
+      shape: SignShape.triangle, icon: Icons.turn_slight_left_rounded,
+    ),
+    TrafficSign(
+      id: 'th_003', code: 'TU-3', category: catSignTehlike,
+      name: 'Tehlikeli Devamlı Virajlar',
+      meaning: 'Art arda birden fazla tehlikeli virajın başladığını bildirir.',
+      whereUsed: 'Dağlık veya dolambaçlı yol kesimlerinin girişinde.',
+      shape: SignShape.triangle, icon: Icons.alt_route_rounded,
+    ),
+    TrafficSign(
+      id: 'th_004', code: 'TU-4', category: catSignTehlike,
+      name: 'Tehlikeli Eğim (İniş)',
+      meaning: 'İleride sürücüyü zorlayacak sert bir iniş olduğunu bildirir.',
+      whereUsed: 'Dağ yollarında ve dik eğimli güzergahlarda inişten önce.',
+      shape: SignShape.triangle, icon: Icons.trending_down_rounded,
+    ),
+    TrafficSign(
+      id: 'th_005', code: 'TU-5', category: catSignTehlike,
+      name: 'Kasisli Yol',
+      meaning: 'Yol yüzeyinde araç sarsıntısına yol açacak tümsek/çukur olduğunu bildirir.',
+      whereUsed: 'Okul, hastane çevresi gibi hız kesilmesi istenen bölgelerde.',
+      shape: SignShape.triangle, icon: Icons.waves_rounded,
+    ),
+    TrafficSign(
+      id: 'th_006', code: 'TU-6', category: catSignTehlike,
+      name: 'Kaygan Yol',
+      meaning: 'Yağmur, yağ veya don nedeniyle yolun kaygan olabileceğini bildirir.',
+      whereUsed: 'Sık kayma kazası yaşanan veya iklim koşullarına duyarlı yol kesimlerinde.',
+      shape: SignShape.triangle, icon: Icons.water_drop_rounded,
+    ),
+    TrafficSign(
+      id: 'th_007', code: 'TU-7', category: catSignTehlike,
+      name: 'Yaya Geçidi',
+      meaning: 'İleride bir yaya geçidi bulunduğunu ve yayalara dikkat edilmesi gerektiğini bildirir.',
+      whereUsed: 'Yerleşim yeri içi ve dışı yaya geçitlerinin öncesinde.',
+      shape: SignShape.triangle, icon: Icons.directions_walk_rounded,
+    ),
+    TrafficSign(
+      id: 'th_008', code: 'TU-8', category: catSignTehlike,
+      name: 'Okul Geçidi',
+      meaning: 'Yakında bir okul bulunduğunu ve çocuklara karşı dikkatli olunması gerektiğini bildirir.',
+      whereUsed: 'Okul giriş/çıkışlarına yakın yol kesimlerinde.',
+      shape: SignShape.triangle, icon: Icons.school_rounded,
+    ),
+    TrafficSign(
+      id: 'th_009', code: 'TU-9', category: catSignTehlike,
+      name: 'Bisiklet Geçebilir',
+      meaning: 'Yola bisikletlilerin çıkabileceği bir noktaya yaklaşıldığını bildirir.',
+      whereUsed: 'Bisiklet yolunun ana yolu kestiği noktalarda.',
+      shape: SignShape.triangle, icon: Icons.pedal_bike_rounded,
+    ),
+    TrafficSign(
+      id: 'th_010', code: 'TU-10', category: catSignTehlike,
+      name: 'Yolda Çalışma',
+      meaning: 'İleride yol yapım/onarım çalışması olduğunu ve dikkatli sürülmesi gerektiğini bildirir.',
+      whereUsed: 'Geçici bakım, onarım veya inşaat alanlarının öncesinde.',
+      shape: SignShape.triangle, icon: Icons.construction_rounded,
+    ),
+    TrafficSign(
+      id: 'th_011', code: 'TU-11', category: catSignTehlike,
+      name: 'Işıklı İşaret Cihazı',
+      meaning: 'İleride trafik ışıklarının bulunduğunu bildirir.',
+      whereUsed: 'Görüşün kısıtlı olduğu, ışıklı kavşağın önceden fark edilemediği yerlerde.',
+      shape: SignShape.triangle, icon: Icons.traffic_rounded,
+    ),
+    TrafficSign(
+      id: 'th_012', code: 'TU-12', category: catSignTehlike,
+      name: 'Kontrolsüz Kavşak',
+      meaning: 'İleride herhangi bir öncelik işareti veya ışığı bulunmayan bir kavşak olduğunu bildirir.',
+      whereUsed: 'Işıksız/işaretsiz ara sokak kavşaklarının öncesinde.',
+      shape: SignShape.triangle, icon: Icons.close_rounded,
+    ),
+    TrafficSign(
+      id: 'th_013', code: 'TU-13', category: catSignTehlike,
+      name: 'Dönel Kavşak',
+      meaning: 'İleride bir göbekli (dönel) kavşak bulunduğunu bildirir.',
+      whereUsed: 'Dönel kavşak girişlerinden önce.',
+      shape: SignShape.triangle, icon: Icons.roundabout_left_rounded,
+    ),
+    TrafficSign(
+      id: 'th_014', code: 'TU-14', category: catSignTehlike,
+      name: 'Kontrollü Demiryolu Geçidi',
+      meaning: 'İleride bariyerli/hemzemin bir tren geçidi olduğunu bildirir.',
+      whereUsed: 'Tren rayının karayolunu kestiği, bariyer bulunan geçitlerin öncesinde.',
+      shape: SignShape.triangle, icon: Icons.train_rounded,
+    ),
+    TrafficSign(
+      id: 'th_015', code: 'TU-15', category: catSignTehlike,
+      name: 'Yandan Rüzgar',
+      meaning: 'Yolun rüzgara açık bir kesiminde ani yandan rüzgar riski olduğunu bildirir.',
+      whereUsed: 'Köprü, viyadük ve açık arazi geçişlerinde.',
+      shape: SignShape.triangle, icon: Icons.air_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> tanzim = [
+    TrafficSign(
+      id: 'ta_001', code: 'TT-2', category: catSignTanzim,
+      name: 'Dur',
+      meaning: 'Sürücünün kavşakta tam olarak durması ve yolun açık olduğundan emin olduktan sonra hareket etmesi gerektiğini belirtir.',
+      whereUsed: 'Ana yola bağlanan tali yollarda ve görüşün kısıtlı olduğu kavşaklarda.',
+      shape: SignShape.octagon, icon: Icons.pan_tool_rounded, overlayText: 'DUR',
+    ),
+    TrafficSign(
+      id: 'ta_002', code: 'TT-1', category: catSignTanzim,
+      name: 'Yol Ver',
+      meaning: 'Sürücünün kavşakta kesişen yoldaki araçlara geçiş önceliği tanıması gerektiğini belirtir.',
+      whereUsed: 'Ana yola katılan tali yol ağızlarında.',
+      shape: SignShape.invertedTriangle, icon: Icons.priority_high_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_003', code: 'TT-3', category: catSignTanzim,
+      name: 'Karşıdan Gelene Yol Ver',
+      meaning: 'Dar yol kesiminde karşı yönden gelen araca öncelik verilmesi gerektiğini belirtir.',
+      whereUsed: 'Tek şeritli dar köprü, tünel gibi kesimlerde.',
+      shape: SignShape.circleRed, icon: Icons.compare_arrows_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_004', code: 'TT-27', category: catSignTanzim,
+      name: 'Öndeki Taşıtı Geçmek Yasaktır',
+      meaning: 'Bu levhadan sonraki bölümde öndeki aracın sollanmasının yasak olduğunu belirtir.',
+      whereUsed: 'Görüş mesafesinin yetersiz olduğu viraj ve tepe üstü kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.do_not_disturb_on_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_005', code: 'TT-25', category: catSignTanzim,
+      name: 'Öndeki Taşıt Yakından Takip Edilemez',
+      meaning: 'Belirtilen mesafeden daha yakın takip yapılmasının yasak olduğunu belirtir.',
+      whereUsed: 'Kaza riski yüksek, yoğun ve hızlı trafik akışı olan yol kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.social_distance_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_006', code: 'TT-30', category: catSignTanzim,
+      name: 'Sesli İkaz Cihazlarının Kullanımı Yasaktır',
+      meaning: 'Korna gibi sesli uyarı cihazlarının kullanılamayacağını belirtir.',
+      whereUsed: 'Hastane, okul çevresi gibi gürültüye duyarlı bölgelerde.',
+      shape: SignShape.circleRed, icon: Icons.volume_off_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> yasak = [
+    TrafficSign(
+      id: 'ya_001', code: 'TT-5', category: catSignYasak,
+      name: 'Taşıt Trafiğine Kapalı Yol',
+      meaning: 'Her türlü motorlu ve motorsuz taşıt trafiğinin yasak olduğunu belirtir.',
+      whereUsed: 'Yayalaştırılmış bölgeler ve trafiğe tamamen kapatılan yollarda.',
+      shape: SignShape.circleRed, icon: Icons.no_transfer_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_002', code: 'TT-7', category: catSignYasak,
+      name: 'Motosiklet Giremez',
+      meaning: 'Motosikletlerin bu yola giremeyeceğini belirtir.',
+      whereUsed: 'Motosiklet trafiğine kapalı özel yol kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.two_wheeler_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_003', code: 'TT-8', category: catSignYasak,
+      name: 'Bisiklet Giremez',
+      meaning: 'Bisikletlerin bu yola giremeyeceğini belirtir.',
+      whereUsed: 'Bisiklet trafiğine kapalı ana arterlerde.',
+      shape: SignShape.circleRed, icon: Icons.pedal_bike_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_004', code: 'TT-10a', category: catSignYasak,
+      name: 'Kamyon Giremez',
+      meaning: 'Belirli ağırlığın üzerindeki kamyonların bu yola giremeyeceğini belirtir.',
+      whereUsed: 'Şehir merkezleri ve ağır taşıt trafiğine kapalı yollarda.',
+      shape: SignShape.circleRed, icon: Icons.local_shipping_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_005', code: 'TT-12', category: catSignYasak,
+      name: 'Yaya Giremez',
+      meaning: 'Yayaların bu yola giremeyeceğini belirtir.',
+      whereUsed: 'Otoyol ve yaya trafiğine kapalı hızlı yol kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.directions_walk_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_006', code: 'TT-26a', category: catSignYasak,
+      name: 'Sağa Dönülmez',
+      meaning: 'Kavşakta sağa dönüş yapılmasının yasak olduğunu belirtir.',
+      whereUsed: 'Sağa dönüşün trafik akışını bozacağı veya tehlikeli olduğu kavşaklarda.',
+      shape: SignShape.circleRed, icon: Icons.turn_right_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_007', code: 'TT-26b', category: catSignYasak,
+      name: 'Sola Dönülmez',
+      meaning: 'Kavşakta sola dönüş yapılmasının yasak olduğunu belirtir.',
+      whereUsed: 'Sola dönüşün karşı trafiği tehlikeye atacağı kavşaklarda.',
+      shape: SignShape.circleRed, icon: Icons.turn_left_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_008', code: 'TT-26c', category: catSignYasak,
+      name: 'U Dönüşü Yapılmaz',
+      meaning: 'Bu bölgede U dönüşü yapılmasının yasak olduğunu belirtir.',
+      whereUsed: 'Bölünmüş yollar ve U dönüşünün tehlikeli olduğu kesimlerde.',
+      shape: SignShape.circleRed, icon: Icons.u_turn_left_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_009', code: 'TT-29a', category: catSignYasak,
+      name: 'Azami Hız Sınırlaması',
+      meaning: 'Levha üzerinde yazan değerin üzerine çıkılamayacak azami hızı belirtir.',
+      whereUsed: 'Hız sınırının değiştiği her yol kesiminin başında.',
+      shape: SignShape.circleRed, icon: Icons.speed_rounded, overlayText: '50',
+    ),
+    TrafficSign(
+      id: 'ya_010', code: 'TT-4', category: catSignYasak,
+      name: 'Girişi Olmayan Yol',
+      meaning: 'Bu yönden yola giriş yapılamayacağını belirtir (tek yönlü yolun ters yönü).',
+      whereUsed: 'Tek yönlü sokak ve caddelerin ters giriş ağızlarında.',
+      shape: SignShape.circleRed, icon: Icons.remove_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> mecburi = [
+    TrafficSign(
+      id: 'me_001', code: 'MY-1', category: catSignMecburi,
+      name: 'İleriden Sağa Mecburi Yön',
+      meaning: 'Bu noktadan itibaren sadece sağa dönülebileceğini belirtir.',
+      whereUsed: 'Düz veya sola geçişin kapalı olduğu kavşak kollarında.',
+      shape: SignShape.circleBlue, icon: Icons.turn_right_rounded,
+    ),
+    TrafficSign(
+      id: 'me_002', code: 'MY-2', category: catSignMecburi,
+      name: 'İleriden Sola Mecburi Yön',
+      meaning: 'Bu noktadan itibaren sadece sola dönülebileceğini belirtir.',
+      whereUsed: 'Düz veya sağa geçişin kapalı olduğu kavşak kollarında.',
+      shape: SignShape.circleBlue, icon: Icons.turn_left_rounded,
+    ),
+    TrafficSign(
+      id: 'me_003', code: 'MY-3', category: catSignMecburi,
+      name: 'İleri Mecburi Yön',
+      meaning: 'Sadece düz gidilebileceğini, dönüş yapılamayacağını belirtir.',
+      whereUsed: 'Şerit ayrımının zorunlu olduğu kavşak girişlerinde.',
+      shape: SignShape.circleBlue, icon: Icons.straight_rounded,
+    ),
+    TrafficSign(
+      id: 'me_004', code: 'MY-4', category: catSignMecburi,
+      name: 'Bisiklet Yolu',
+      meaning: 'Bu yolun yalnızca bisikletliler tarafından kullanılması gerektiğini belirtir.',
+      whereUsed: 'Ayrılmış bisiklet yolu güzergahlarında.',
+      shape: SignShape.circleBlue, icon: Icons.pedal_bike_rounded,
+    ),
+    TrafficSign(
+      id: 'me_005', code: 'MY-5', category: catSignMecburi,
+      name: 'Yaya Yolu',
+      meaning: 'Bu yolun yalnızca yayalar tarafından kullanılabileceğini belirtir.',
+      whereUsed: 'Yaya bölgesi ve yürüyüş yollarında.',
+      shape: SignShape.circleBlue, icon: Icons.directions_walk_rounded,
+    ),
+    TrafficSign(
+      id: 'me_006', code: 'MY-6', category: catSignMecburi,
+      name: 'Zincir Takma Mecburiyeti',
+      meaning: 'Kar/buz nedeniyle araçlara zincir takılmasının zorunlu olduğunu belirtir.',
+      whereUsed: 'Kışın yoğun kar yağışı alan dağ geçitlerinde.',
+      shape: SignShape.circleBlue, icon: Icons.ac_unit_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> bilgi = [
+    TrafficSign(
+      id: 'bi_001', code: 'B-18', category: catSignBilgi,
+      name: 'Otoyol Başlangıcı',
+      meaning: 'Otoyolun başladığını ve otoyol kurallarının geçerli olduğunu belirtir.',
+      whereUsed: 'Otoyol giriş rampalarında.',
+      shape: SignShape.squareBlue, icon: Icons.add_road_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_002', code: 'B-25', category: catSignBilgi,
+      name: 'Hastane',
+      meaning: 'Yakında bir hastane bulunduğunu belirtir.',
+      whereUsed: 'Hastane yönlendirme güzergahlarında.',
+      shape: SignShape.squareBlue, icon: Icons.local_hospital_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_003', code: 'B-26', category: catSignBilgi,
+      name: 'Akaryakıt İstasyonu',
+      meaning: 'Yakında bir akaryakıt istasyonu bulunduğunu belirtir.',
+      whereUsed: 'Şehirlerarası yollarda istasyon girişlerinden önce.',
+      shape: SignShape.squareBlue, icon: Icons.local_gas_station_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_004', code: 'B-17', category: catSignBilgi,
+      name: 'Tek Yönlü Yol',
+      meaning: 'Yolun yalnızca belirtilen yönde kullanılabileceğini belirtir.',
+      whereUsed: 'Şehir içi tek yönlü cadde ve sokaklarda.',
+      shape: SignShape.squareBlue, icon: Icons.arrow_upward_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_005', code: 'B-16', category: catSignBilgi,
+      name: 'Çıkmaz Yol',
+      meaning: 'Yolun ileride son bulacağını, çıkışı olmadığını belirtir.',
+      whereUsed: 'Çıkmaz sokak girişlerinde.',
+      shape: SignShape.squareBlue, icon: Icons.block_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_006', code: 'B-33', category: catSignBilgi,
+      name: 'Kamp Yeri',
+      meaning: 'Yakında bir kamp alanı bulunduğunu belirtir.',
+      whereUsed: 'Turistik ve doğa yolu güzergahlarında.',
+      shape: SignShape.squareBlue, icon: Icons.holiday_village_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_007', code: 'B-24', category: catSignBilgi,
+      name: 'Telefon',
+      meaning: 'Yakında acil durum/telefon noktası bulunduğunu belirtir.',
+      whereUsed: 'Otoyol ve şehirlerarası yol kenarlarında.',
+      shape: SignShape.squareBlue, icon: Icons.phone_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> park = [
+    TrafficSign(
+      id: 'pa_001', code: 'P-1', category: catSignPark,
+      name: 'Park Yeri',
+      meaning: 'Belirtilen alanın araç park etmeye ayrıldığını belirtir.',
+      whereUsed: 'Şehir içi park alanları ve otoparklarda.',
+      shape: SignShape.circleBlue, icon: Icons.local_parking_rounded,
+    ),
+    TrafficSign(
+      id: 'pa_002', code: 'P-2', category: catSignPark,
+      name: 'Park Yapılmaz',
+      meaning: 'Aracın park edilemeyeceğini, ancak kısa süreli durmanın mümkün olabileceğini belirtir.',
+      whereUsed: 'Görüşü kapatan veya trafiği tıkayan yol kenarlarında.',
+      shape: SignShape.circleRed, icon: Icons.local_parking_rounded,
+    ),
+    TrafficSign(
+      id: 'pa_003', code: 'P-3', category: catSignPark,
+      name: 'Duraklamak ve Park Etmek Yasaktır',
+      meaning: 'Aracın hem duraklamasının hem de park edilmesinin yasak olduğunu belirtir.',
+      whereUsed: 'Kavşak, yaya geçidi ve dar yol kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.not_interested_rounded,
+    ),
+    TrafficSign(
+      id: 'pa_004', code: 'P-4', category: catSignPark,
+      name: 'Kısa Süreli Park Yeri',
+      meaning: 'Belirli bir süre sınırıyla park edilebilecek alanı belirtir.',
+      whereUsed: 'Yoğun ticari bölgelerdeki hızlı sirkülasyon alanlarında.',
+      shape: SignShape.circleBlue, icon: Icons.timer_rounded,
+    ),
+    TrafficSign(
+      id: 'pa_005', code: 'P-5', category: catSignPark,
+      name: 'Ücretli Park Yeri',
+      meaning: 'Park etmenin ücrete tabi olduğu alanı belirtir.',
+      whereUsed: 'Belediye tarafından işletilen ücretli park bölgelerinde.',
+      shape: SignShape.circleBlue, icon: Icons.paid_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> otoyol = [
+    TrafficSign(
+      id: 'ot_001', code: 'O-1', category: catSignOtoyol,
+      name: 'Otoyol Başlangıcı',
+      meaning: 'Otoyolun başladığını ve yaya/bisiklet/traktör gibi araçların yasak olduğunu belirtir.',
+      whereUsed: 'Otoyola giriş rampalarında.',
+      shape: SignShape.squareBlue, icon: Icons.add_road_rounded,
+    ),
+    TrafficSign(
+      id: 'ot_002', code: 'O-2', category: catSignOtoyol,
+      name: 'Otoyol Sonu',
+      meaning: 'Otoyolun bittiğini ve normal karayolu kurallarının geçerli olacağını belirtir.',
+      whereUsed: 'Otoyol çıkışlarında.',
+      shape: SignShape.squareBlue, icon: Icons.remove_road_rounded,
+    ),
+    TrafficSign(
+      id: 'ot_003', code: 'O-3', category: catSignOtoyol,
+      name: 'Asgari Hız Sınırı',
+      meaning: 'Belirtilen değerin altında seyredilemeyecek en düşük hızı belirtir.',
+      whereUsed: 'Sol/geçiş şeritlerinde ve otoyol ana gövdesinde.',
+      shape: SignShape.circleBlue, icon: Icons.speed_rounded, overlayText: '40',
+    ),
+    TrafficSign(
+      id: 'ot_004', code: 'O-4', category: catSignOtoyol,
+      name: 'Dinlenme Tesisi',
+      meaning: 'Yakında bir dinlenme/mola alanı bulunduğunu belirtir.',
+      whereUsed: 'Uzun otoyol güzergahlarında belirli aralıklarla.',
+      shape: SignShape.squareBlue, icon: Icons.restaurant_rounded,
+    ),
+    TrafficSign(
+      id: 'ot_005', code: 'O-5', category: catSignOtoyol,
+      name: 'Acil Durum Şeridi',
+      meaning: 'Şeridin yalnızca arıza/acil durumlarda kullanılabileceğini belirtir.',
+      whereUsed: 'Otoyolların en sağ şeridinde sürekli olarak.',
+      shape: SignShape.squareBlue, icon: Icons.emergency_rounded,
+    ),
+  ];
+
+  static const List<TrafficSign> yolCalisma = [
+    TrafficSign(
+      id: 'yc_001', code: 'YC-1', category: catSignYolCalisma,
+      name: 'Yolda Çalışma (Geçici)',
+      meaning: 'Geçici olarak yol üzerinde bakım/onarım çalışması yapıldığını belirtir.',
+      whereUsed: 'Aktif şantiye ve onarım bölgelerinin öncesinde.',
+      shape: SignShape.diamondYellow, icon: Icons.construction_rounded,
+    ),
+    TrafficSign(
+      id: 'yc_002', code: 'YC-2', category: catSignYolCalisma,
+      name: 'Geçici Hız Sınırı',
+      meaning: 'Çalışma bölgesi boyunca geçerli olan geçici azami hızı belirtir.',
+      whereUsed: 'Yol çalışması alanlarının giriş ve içinde.',
+      shape: SignShape.diamondYellow, icon: Icons.speed_rounded, overlayText: '30',
+    ),
+    TrafficSign(
+      id: 'yc_003', code: 'YC-3', category: catSignYolCalisma,
+      name: 'Şerit Daralması',
+      meaning: 'İleride şerit sayısının geçici olarak azaldığını belirtir.',
+      whereUsed: 'Tek şeride indirilen çalışma alanı geçişlerinde.',
+      shape: SignShape.diamondYellow, icon: Icons.merge_type_rounded,
+    ),
+    TrafficSign(
+      id: 'yc_004', code: 'YC-4', category: catSignYolCalisma,
+      name: 'Alternatif Güzergah',
+      meaning: 'Yolun kapalı olduğunu ve alternatif bir güzergaha yönlendirildiğini belirtir.',
+      whereUsed: 'Tam kapatılan yol kesimlerinde yönlendirme noktalarında.',
+      shape: SignShape.diamondYellow, icon: Icons.alt_route_rounded,
+    ),
+    TrafficSign(
+      id: 'yc_005', code: 'YC-5', category: catSignYolCalisma,
+      name: 'Yolda İşçi Var',
+      meaning: 'Çalışma alanında yol işçilerinin bulunduğunu ve azami dikkat gerektiğini belirtir.',
+      whereUsed: 'Aktif olarak işçi çalıştırılan yol kesimlerinde.',
+      shape: SignShape.diamondYellow, icon: Icons.engineering_rounded,
+    ),
+  ];
+
+  static final Map<String, List<TrafficSign>> byCategory = {
+    catSignTehlike: tehlike,
+    catSignTanzim: tanzim,
+    catSignYasak: yasak,
+    catSignMecburi: mecburi,
+    catSignBilgi: bilgi,
+    catSignPark: park,
+    catSignOtoyol: otoyol,
+    catSignYolCalisma: yolCalisma,
+  };
+
+  static List<TrafficSign> get all => byCategory.values.expand((l) => l).toList();
+
+  static List<TrafficSign> forCategory(String category) => byCategory[category] ?? const [];
+
+  static TrafficSign? byId(String id) {
+    for (final s in all) {
+      if (s.id == id) return s;
+    }
+    return null;
+  }
+}
+
+// ------------------------------------------------------------
+//  SECTION: services/sign_progress_store.dart
+//  "Öğrendim / Biliyorum" ilerlemesi bellek-içinde tutulur (uygulama
+//  yeniden başlatıldığında sıfırlanır). Kalıcı hâle getirmek için
+//  `shared_preferences` paketi eklenip burada dosyaya yazılabilir.
+// ------------------------------------------------------------
+
+class SignProgressStore {
+  SignProgressStore._();
+
+  static final Set<String> _known = <String>{};
+
+  static Set<String> loadKnownIds() => Set<String>.from(_known);
+
+  static Future<void> setKnown(String signId, bool known) async {
+    if (known) {
+      _known.add(signId);
+    } else {
+      _known.remove(signId);
+    }
+  }
+
+  static bool isKnown(String signId) => _known.contains(signId);
+
+  static double? categoryMasteryPercent(String category) {
+    final signsInCat = TrafficSignBank.forCategory(category);
+    if (signsInCat.isEmpty) return null;
+    final count = signsInCat.where((s) => _known.contains(s.id)).length;
+    return (count / signsInCat.length) * 100.0;
+  }
+
+  static Future<void> resetProgress() async => _known.clear();
+}
+
+// ------------------------------------------------------------
+//  SECTION: widgets/sign_clippers.dart
+// ------------------------------------------------------------
+
+class _TriangleClipper extends CustomClipper<Path> {
+  const _TriangleClipper();
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(size.width / 2, 0)
+    ..lineTo(size.width, size.height)
+    ..lineTo(0, size.height)
+    ..close();
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _InvertedTriangleClipper extends CustomClipper<Path> {
+  const _InvertedTriangleClipper();
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(0, 0)
+    ..lineTo(size.width, 0)
+    ..lineTo(size.width / 2, size.height)
+    ..close();
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _DiamondClipper extends CustomClipper<Path> {
+  const _DiamondClipper();
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(size.width / 2, 0)
+    ..lineTo(size.width, size.height / 2)
+    ..lineTo(size.width / 2, size.height)
+    ..lineTo(0, size.height / 2)
+    ..close();
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+class _OctagonClipper extends CustomClipper<Path> {
+  const _OctagonClipper();
+  @override
+  Path getClip(Size size) {
+    final w = size.width, h = size.height;
+    final cut = w * 0.29;
+    return Path()
+      ..moveTo(cut, 0)
+      ..lineTo(w - cut, 0)
+      ..lineTo(w, cut)
+      ..lineTo(w, h - cut)
+      ..lineTo(w - cut, h)
+      ..lineTo(cut, h)
+      ..lineTo(0, h - cut)
+      ..lineTo(0, cut)
+      ..close();
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+// ------------------------------------------------------------
+//  SECTION: widgets/sign_badge.dart
+//  Levhayı gerçek görsel dosyası kullanmadan şekil + renk + ikon
+//  ile çizen widget.
+// ------------------------------------------------------------
+
+class TrafficSignBadge extends StatelessWidget {
+  final TrafficSign sign;
+  final double size;
+  const TrafficSignBadge({super.key, required this.sign, this.size = 84});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (sign.shape) {
+      case SignShape.triangle:
+        return _shaped(clipper: const _TriangleClipper(), fill: Colors.white, border: kDanger,
+            iconColor: const Color(0xFF1A1A1A), padTop: size * 0.30);
+      case SignShape.invertedTriangle:
+        return _shaped(clipper: const _InvertedTriangleClipper(), fill: Colors.white, border: kDanger,
+            iconColor: const Color(0xFF1A1A1A), padTop: size * 0.05, padBottom: size * 0.25);
+      case SignShape.diamondYellow:
+        return _shaped(clipper: const _DiamondClipper(), fill: const Color(0xFFF5B942), border: const Color(0xFF1A1A1A),
+            iconColor: const Color(0xFF1A1A1A));
+      case SignShape.octagon:
+        return _shaped(clipper: const _OctagonClipper(), fill: kDanger, border: Colors.white,
+            iconColor: Colors.white);
+      case SignShape.circleRed:
+        return _circleOrSquare(isCircle: true, fill: Colors.white, border: kDanger,
+            iconColor: const Color(0xFF1A1A1A), borderWidth: size * 0.12);
+      case SignShape.circleBlue:
+        return _circleOrSquare(isCircle: true, fill: kNavyAccent, border: Colors.white,
+            iconColor: Colors.white, borderWidth: size * 0.03);
+      case SignShape.squareBlue:
+        return _circleOrSquare(isCircle: false, fill: kNavyAccent, border: Colors.white,
+            iconColor: Colors.white, borderWidth: size * 0.03);
+    }
+  }
+
+  Widget _shaped({
+    required CustomClipper<Path> clipper,
+    required Color fill,
+    required Color border,
+    required Color iconColor,
+    double padTop = 0,
+    double padBottom = 0,
+  }) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(alignment: Alignment.center, children: [
+        ClipPath(
+          clipper: clipper,
+          child: Container(color: border),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: size * 0.08),
+          child: ClipPath(
+            clipper: clipper,
+            child: SizedBox(
+              width: size - size * 0.14,
+              height: size - size * 0.14,
+              child: Container(color: fill),
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: padTop, bottom: padBottom),
+          child: _content(iconColor),
+        ),
+      ]),
+    );
+  }
+
+  Widget _circleOrSquare({
+    required bool isCircle,
+    required Color fill,
+    required Color border,
+    required Color iconColor,
+    required double borderWidth,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: fill,
+        shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: isCircle ? null : BorderRadius.circular(size * 0.14),
+        border: Border.all(color: border, width: borderWidth),
+      ),
+      alignment: Alignment.center,
+      child: _content(iconColor),
+    );
+  }
+
+  Widget _content(Color iconColor) {
+    if (sign.overlayText != null) {
+      return Text(sign.overlayText!,
+          style: tsD(size: size * 0.30, w: FontWeight.w800, color: iconColor));
+    }
+    return Icon(sign.icon, size: size * 0.42, color: iconColor);
+  }
+}
+
+// ------------------------------------------------------------
+//  SECTION: screens/sign_category_list_screen.dart
+// ------------------------------------------------------------
+
+class SignCategoryListScreen extends StatefulWidget {
+  const SignCategoryListScreen({super.key});
+  @override
+  State<SignCategoryListScreen> createState() => _SignCategoryListScreenState();
+}
+
+class _SignCategoryListScreenState extends State<SignCategoryListScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      appBar: AppBar(
+        title: Text('Trafik Levhaları', style: ts(size: 16, w: FontWeight.w700, color: Colors.white)),
+        backgroundColor: kCardElevated,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Karışık Flashcard',
+            icon: const Icon(Icons.style_rounded),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => SignFlashcardScreen(signs: List.of(TrafficSignBank.all)..shuffle(), title: 'Tüm Levhalar'),
+            )),
+          ),
+        ],
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: ListView(
+        padding: const EdgeInsets.all(14),
+        children: [
+          Text('${TrafficSignBank.all.length} levha · 8 kategori',
+              style: ts(size: 12.5, color: isDark ? Colors.white38 : Colors.black38)),
+          const SizedBox(height: 12),
+          ...kSignCategoryTitles.keys.map((cat) {
+            final catSigns = TrafficSignBank.forCategory(cat);
+            final pct = SignProgressStore.categoryMasteryPercent(cat);
+            final color = kSignCategoryColors[cat] ?? kPrimary;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: isDark ? kCard : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                leading: Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(color: color.withOpacity(.12), borderRadius: BorderRadius.circular(11)),
+                  child: Icon(kSignCategoryIcons[cat], color: color, size: 20),
+                ),
+                title: Text(kSignCategoryTitles[cat] ?? cat,
+                    style: ts(size: 14, w: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                subtitle: Text(
+                    '${catSigns.length} levha${pct != null ? '  ·  %${pct.toStringAsFixed(0)} biliniyor' : ''}',
+                    style: ts(size: 11.5, color: isDark ? Colors.white38 : Colors.black38)),
+                trailing: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white38 : Colors.black26, size: 18),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => SignListScreen(category: cat),
+                )),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+//  SECTION: screens/sign_list_screen.dart
+// ------------------------------------------------------------
+
+class SignListScreen extends StatefulWidget {
+  final String category;
+  const SignListScreen({super.key, required this.category});
+  @override
+  State<SignListScreen> createState() => _SignListScreenState();
+}
+
+class _SignListScreenState extends State<SignListScreen> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = kSignCategoryColors[widget.category] ?? kPrimary;
+    final allSigns = TrafficSignBank.forCategory(widget.category);
+    final filteredSigns = _query.isEmpty
+        ? allSigns
+        : allSigns.where((s) => s.name.toLowerCase().contains(_query.toLowerCase())).toList();
+    final known = SignProgressStore.loadKnownIds();
+
+    return Scaffold(
+      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      appBar: AppBar(
+        title: Text(kSignCategoryTitles[widget.category] ?? widget.category,
+            style: ts(size: 16, w: FontWeight.w700, color: Colors.white)),
+        backgroundColor: kCardElevated,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: allSigns.isEmpty
+            ? null
+            : () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => SignQuizScreen(category: widget.category),
+                )),
+        icon: const Icon(Icons.quiz_rounded),
+        label: const Text('MİNİ TEST'),
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+      ),
+      body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+          child: Row(children: [
+            Expanded(
+              child: TextField(
+                onChanged: (v) => setState(() => _query = v),
+                style: ts(size: 13.5, color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  hintText: 'Levha ara…',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: allSigns.isEmpty
+                  ? null
+                  : () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => SignFlashcardScreen(
+                          signs: List.of(allSigns)..shuffle(),
+                          title: kSignCategoryTitles[widget.category] ?? '',
+                        ),
+                      )),
+              icon: const Icon(Icons.style_rounded, size: 16),
+              label: Text('Kart', style: ts(size: 12.5, w: FontWeight.w700)),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                side: BorderSide(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ]),
+        ),
+        Expanded(
+          child: filteredSigns.isEmpty
+              ? Center(
+                  child: Text('Sonuç bulunamadı.',
+                      style: ts(size: 13, color: isDark ? Colors.white38 : Colors.black38)))
+              : GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(14, 4, 14, 90),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.86,
+                  ),
+                  itemCount: filteredSigns.length,
+                  itemBuilder: (_, i) {
+                    final s = filteredSigns[i];
+                    final isKnown = known.contains(s.id);
+                    return GestureDetector(
+                      onTap: () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => SignDetailScreen(sign: s)))
+                          .then((_) => setState(() {})),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark ? kCard : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+                        ),
+                        child: Column(children: [
+                          Expanded(child: Center(child: TrafficSignBadge(sign: s, size: 64))),
+                          const SizedBox(height: 8),
+                          Text(s.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                              style: ts(size: 11.5, w: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+                          const SizedBox(height: 4),
+                          Icon(isKnown ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                              size: 15, color: isKnown ? kSuccess : (isDark ? Colors.white24 : Colors.black26)),
+                        ]),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ------------------------------------------------------------
+//  SECTION: screens/sign_detail_screen.dart
+// ------------------------------------------------------------
+
+class SignDetailScreen extends StatefulWidget {
+  final TrafficSign sign;
+  const SignDetailScreen({super.key, required this.sign});
+  @override
+  State<SignDetailScreen> createState() => _SignDetailScreenState();
+}
+
+class _SignDetailScreenState extends State<SignDetailScreen> {
+  late bool _known;
+
+  @override
+  void initState() {
+    super.initState();
+    _known = SignProgressStore.isKnown(widget.sign.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final s = widget.sign;
+    final color = kSignCategoryColors[s.category] ?? kPrimary;
+
+    return Scaffold(
+      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      appBar: AppBar(
+        title: Text(s.code, style: ts(size: 15, w: FontWeight.w700, color: Colors.white)),
+        backgroundColor: kCardElevated,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Center(child: TrafficSignBadge(sign: s, size: 140)),
+          const SizedBox(height: 18),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: color.withOpacity(.14), borderRadius: BorderRadius.circular(8)),
+              child: Text(kSignCategoryTitles[s.category] ?? s.category,
+                  style: ts(size: 11.5, w: FontWeight.w700, color: color)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(child: Text(s.name, textAlign: TextAlign.center,
+              style: tsD(size: 21, w: FontWeight.w800, color: isDark ? Colors.white : Colors.black87))),
+          const SizedBox(height: 20),
+          _infoBlock(isDark, icon: Icons.info_rounded, title: 'Anlamı', text: s.meaning),
+          const SizedBox(height: 10),
+          _infoBlock(isDark, icon: Icons.place_rounded, title: 'Nerede Kullanılır', text: s.whereUsed),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                setState(() => _known = !_known);
+                await SignProgressStore.setKnown(s.id, _known);
+                HapticFeedback.lightImpact();
+              },
+              icon: Icon(_known ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded),
+              label: Text(_known ? 'BİLİYORUM ✅' : 'BU LEVHAYI BİLİYOR MUSUN?',
+                  style: ts(size: 13.5, w: FontWeight.w800, color: kSurface)),
+              style: ElevatedButton.styleFrom(backgroundColor: _known ? kSuccess : kPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoBlock(bool isDark, {required IconData icon, required String title, required String text}) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? kCard : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(icon, size: 16, color: kPrimary),
+            const SizedBox(width: 6),
+            Text(title, style: ts(size: 12.5, w: FontWeight.w800, color: kPrimary)),
+          ]),
+          const SizedBox(height: 8),
+          Text(text, style: ts(size: 13.5, color: isDark ? Colors.white70 : Colors.black87, height: 1.4)),
+        ]),
+      );
+}
+
+// ------------------------------------------------------------
+//  SECTION: screens/sign_flashcard_screen.dart
+//  "Bu levhayı biliyor musun?" hızlı kart sistemi
+// ------------------------------------------------------------
+
+class SignFlashcardScreen extends StatefulWidget {
+  final List<TrafficSign> signs;
+  final String title;
+  const SignFlashcardScreen({super.key, required this.signs, required this.title});
+  @override
+  State<SignFlashcardScreen> createState() => _SignFlashcardScreenState();
+}
+
+class _SignFlashcardScreenState extends State<SignFlashcardScreen> {
+  int _index = 0;
+  bool _flipped = false;
+  int _knownCount = 0;
+  int _unknownCount = 0;
+
+  TrafficSign get _current => widget.signs[_index];
+  bool get _done => _index >= widget.signs.length;
+
+  Future<void> _mark(bool known) async {
+    await SignProgressStore.setKnown(_current.id, known);
+    setState(() {
+      if (known) {
+        _knownCount++;
+      } else {
+        _unknownCount++;
+      }
+      _index++;
+      _flipped = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      appBar: AppBar(
+        title: Text(widget.title, style: ts(size: 15, w: FontWeight.w700, color: Colors.white)),
+        backgroundColor: kCardElevated,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: widget.signs.isEmpty
+          ? Center(child: Text('Bu sette levha yok.', style: ts(size: 13, color: isDark ? Colors.white54 : Colors.black45)))
+          : _done
+              ? _summary(isDark)
+              : _card(isDark),
+    );
+  }
+
+  Widget _summary(bool isDark) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.emoji_events_rounded, color: kPrimary, size: 52),
+            const SizedBox(height: 14),
+            Text('Tur tamamlandı!', style: tsD(size: 20, w: FontWeight.w800, color: isDark ? Colors.white : Colors.black87)),
+            const SizedBox(height: 10),
+            Text('✅ Biliyorum: $_knownCount   ❌ Bilmiyorum: $_unknownCount',
+                style: ts(size: 14, color: isDark ? Colors.white70 : Colors.black54)),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('GERİ DÖN'),
+            ),
+          ]),
+        ),
+      );
+
+  Widget _card(bool isDark) {
+    final s = _current;
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(children: [
+        LinearProgressIndicator(
+          value: _index / widget.signs.length,
+          minHeight: 5,
+          backgroundColor: isDark ? kCardElevated : const Color(0xFFE8EAED),
+          valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
+        ),
+        const SizedBox(height: 6),
+        Text('${_index + 1} / ${widget.signs.length}', style: ts(size: 12, color: isDark ? Colors.white38 : Colors.black38)),
+        Expanded(
+          child: Center(
+            child: GestureDetector(
+              onTap: () => setState(() => _flipped = !_flipped),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: _flipped ? _backFace(isDark, s) : _frontFace(isDark, s),
+              ),
+            ),
+          ),
+        ),
+        if (!_flipped)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text('Kartı çevirmek için dokun', style: ts(size: 12, color: isDark ? Colors.white38 : Colors.black38)),
+          ),
+        Row(children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _mark(false),
+              icon: const Icon(Icons.close_rounded, color: kDanger),
+              label: Text('Bilmiyorum', style: ts(size: 13.5, w: FontWeight.w700, color: kDanger)),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: kDanger),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _mark(true),
+              icon: const Icon(Icons.check_rounded),
+              label: Text('Biliyorum', style: ts(size: 13.5, w: FontWeight.w800, color: kSurface)),
+              style: ElevatedButton.styleFrom(backgroundColor: kSuccess),
+            ),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _frontFace(bool isDark, TrafficSign s) => Container(
+        key: const ValueKey('front'),
+        width: 240,
+        height: 300,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? kCard : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+        ),
+        alignment: Alignment.center,
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          TrafficSignBadge(sign: s, size: 130),
+          const SizedBox(height: 18),
+          Text('Bu levhayı biliyor musun?', textAlign: TextAlign.center,
+              style: ts(size: 13, w: FontWeight.w600, color: isDark ? Colors.white54 : Colors.black45)),
+        ]),
+      );
+
+  Widget _backFace(bool isDark, TrafficSign s) => Container(
+        key: const ValueKey('back'),
+        width: 240,
+        height: 300,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? kCard : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: kPrimary, width: 1.6),
+        ),
+        alignment: Alignment.center,
+        child: SingleChildScrollView(
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            TrafficSignBadge(sign: s, size: 80),
+            const SizedBox(height: 12),
+            Text(s.name, textAlign: TextAlign.center,
+                style: ts(size: 15, w: FontWeight.w800, color: isDark ? Colors.white : Colors.black87)),
+            const SizedBox(height: 8),
+            Text(s.meaning, textAlign: TextAlign.center,
+                style: ts(size: 12, color: isDark ? Colors.white70 : Colors.black54, height: 1.35)),
+          ]),
+        ),
+      );
+}
+
+// ------------------------------------------------------------
+//  SECTION: screens/sign_quiz_screen.dart
+//  Çoktan seçmeli mini test: levha gösterilir, doğru anlamı seçilir.
+// ------------------------------------------------------------
+
+class SignQuizScreen extends StatefulWidget {
+  final String category;
+  final int questionCount;
+  const SignQuizScreen({super.key, required this.category, this.questionCount = 10});
+  @override
+  State<SignQuizScreen> createState() => _SignQuizScreenState();
+}
+
+class _SignQuizScreenState extends State<SignQuizScreen> {
+  late final List<TrafficSign> _pool;
+  late final List<_SignQuestion> _questions;
+  int _index = 0;
+  int? _selected;
+  bool _answered = false;
+  int _correct = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pool = TrafficSignBank.forCategory(widget.category);
+    _questions = _buildQuestions();
+  }
+
+  List<_SignQuestion> _buildQuestions() {
+    final rnd = Random();
+    final shuffledPool = List<TrafficSign>.from(_pool)..shuffle(rnd);
+    final count = min(widget.questionCount, shuffledPool.length);
+    final chosen = shuffledPool.sublist(0, count);
+    return chosen.map((sign) {
+      final distractors = List<TrafficSign>.from(_pool)
+        ..remove(sign)
+        ..shuffle(rnd);
+      final wrongOptions = distractors.take(3).map((s) => s.name).toList();
+      final options = [sign.name, ...wrongOptions]..shuffle(rnd);
+      // az levha varsa 2-3 seçenekle devam edilebilir
+      return _SignQuestion(sign: sign, options: options, correctText: sign.name);
+    }).toList();
+  }
+
+  void _select(int i) {
+    if (_answered) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selected = i;
+      _answered = true;
+      if (_questions[_index].options[i] == _questions[_index].correctText) {
+        _correct++;
+        SignProgressStore.setKnown(_questions[_index].sign.id, true);
+      } else {
+        SignProgressStore.setKnown(_questions[_index].sign.id, false);
+      }
+    });
+  }
+
+  void _next() {
+    if (_index >= _questions.length - 1) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (_) => _SignQuizResultScreen(
+          correct: _correct, total: _questions.length, category: widget.category,
+        ),
+      ));
+      return;
+    }
+    setState(() {
+      _index++;
+      _selected = null;
+      _answered = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (_questions.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Mini Test'), backgroundColor: kCardElevated, foregroundColor: Colors.white),
+        body: Center(child: Text('Bu kategoride yeterli levha yok.', style: ts(size: 13, color: isDark ? Colors.white54 : Colors.black45))),
+      );
+    }
+
+    final q = _questions[_index];
+    return Scaffold(
+      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      appBar: AppBar(
+        title: Text('${kSignCategoryTitles[widget.category]} · Mini Test', style: ts(size: 14.5, w: FontWeight.w700, color: Colors.white)),
+        backgroundColor: kCardElevated,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Column(children: [
+        LinearProgressIndicator(
+          value: (_index + 1) / _questions.length,
+          minHeight: 4,
+          backgroundColor: isDark ? kCardElevated : const Color(0xFFE8EAED),
+          valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(18),
+            children: [
+              Text('${_index + 1} / ${_questions.length}', style: ts(size: 12, color: isDark ? Colors.white54 : Colors.black45)),
+              const SizedBox(height: 10),
+              Center(child: TrafficSignBadge(sign: q.sign, size: 130)),
+              const SizedBox(height: 6),
+              Center(
+                child: Text('Bu levhanın anlamı nedir?',
+                    style: ts(size: 14, w: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
+              ),
+              const SizedBox(height: 18),
+              ...List.generate(q.options.length, (i) {
+                OptionState state = OptionState.idle;
+                if (_answered) {
+                  if (q.options[i] == q.correctText) {
+                    state = OptionState.correct;
+                  } else if (i == _selected) {
+                    state = OptionState.wrong;
+                  }
+                } else if (_selected == i) {
+                  state = OptionState.selected;
+                }
+                return OptionTile(
+                  label: String.fromCharCode(65 + i),
+                  text: q.options[i],
+                  state: state,
+                  isDark: isDark,
+                  onTap: () => _select(i),
+                );
+              }),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _answered ? _next : null,
+              child: Text(_index >= _questions.length - 1 ? 'BİTİR' : 'SONRAKİ',
+                  style: ts(size: 14.5, w: FontWeight.w800, color: kSurface)),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+class _SignQuestion {
+  final TrafficSign sign;
+  final List<String> options;
+  final String correctText;
+  _SignQuestion({required this.sign, required this.options, required this.correctText});
+}
+
+class _SignQuizResultScreen extends StatelessWidget {
+  final int correct;
+  final int total;
+  final String category;
+  const _SignQuizResultScreen({required this.correct, required this.total, required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pct = total == 0 ? 0.0 : (correct / total) * 100;
+    final color = pct >= 70 ? kSuccess : kDanger;
+
+    return Scaffold(
+      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      appBar: AppBar(
+        title: const Text('Test Sonucu'),
+        backgroundColor: kCardElevated,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(pct >= 70 ? Icons.emoji_events_rounded : Icons.replay_circle_filled_rounded, color: color, size: 48),
+            const SizedBox(height: 14),
+            Text('${pct.toStringAsFixed(0)}%', style: tsD(size: 44, w: FontWeight.w800, color: color)),
+            const SizedBox(height: 8),
+            Text('$correct / $total doğru', style: ts(size: 14, color: isDark ? Colors.white70 : Colors.black54)),
+            const SizedBox(height: 22),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('GERİ DÖN'),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (_) => SignQuizScreen(category: category),
+                )),
+                child: const Text('TEKRAR ÇÖZ'),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+}
