@@ -351,7 +351,7 @@ class _SurvoxAppState extends State<SurvoxApp> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _state,
     builder: (_, __) => MaterialApp(
-      title: 'Sürvox Ehliyet',
+      title: 'Sınav365 Ehliyet',
       debugShowCheckedModeBanner: false,
       theme: _theme,
       home: SplashScreen(s: _state),
@@ -3400,7 +3400,7 @@ class OptionTile extends StatelessWidget {
     ),
   );
 }
-// ------------------------------------------------------------
+//// ------------------------------------------------------------
 //  SECTION: models/sign_shape.dart
 // ------------------------------------------------------------
 
@@ -3649,6 +3649,48 @@ class TrafficSignBank {
       whereUsed: 'Kayalık yarma geçişleri ve dağ yolu kesimlerinde.',
       shape: SignShape.triangle, icon: Icons.terrain_rounded,
     ),
+    TrafficSign(
+      id: 'th_022', code: 'TU-22', category: catSignTehlike,
+      name: 'Sağdan Daralan Yol',
+      meaning: 'Yolun sağ taraftan daraldığını ve şerit değiştirmek gerekebileceğini bildirir.',
+      whereUsed: 'Şerit sayısının sağdan azaldığı kesimlerin öncesinde.',
+      shape: SignShape.triangle, icon: Icons.merge_type_rounded,
+    ),
+    TrafficSign(
+      id: 'th_023', code: 'TU-23', category: catSignTehlike,
+      name: 'Soldan Daralan Yol',
+      meaning: 'Yolun sol taraftan daraldığını ve şerit değiştirmek gerekebileceğini bildirir.',
+      whereUsed: 'Şerit sayısının soldan azaldığı kesimlerin öncesinde.',
+      shape: SignShape.triangle, icon: Icons.merge_type_rounded,
+    ),
+    TrafficSign(
+      id: 'th_024', code: 'TU-24', category: catSignTehlike,
+      name: 'Sağa Kaydırma Şeritli Ada',
+      meaning: 'Yol ortasındaki adanın sağa doğru trafiği yönlendirdiğini bildirir.',
+      whereUsed: 'Refüjli/adalı kavşak girişlerinde.',
+      shape: SignShape.triangle, icon: Icons.turn_right_rounded,
+    ),
+    TrafficSign(
+      id: 'th_025', code: 'TU-25', category: catSignTehlike,
+      name: 'Açılır Köprü',
+      meaning: 'İleride gemi geçişi için açılan bir köprü bulunduğunu bildirir.',
+      whereUsed: 'Kanal ve boğaz üzerindeki açılır köprü yaklaşımlarında.',
+      shape: SignShape.triangle, icon: Icons.directions_boat_rounded,
+    ),
+    TrafficSign(
+      id: 'th_026', code: 'TU-26', category: catSignTehlike,
+      name: 'Kontrolsüz Hemzemin Geçit',
+      meaning: 'Bariyersiz bir tren geçidine yaklaşıldığını bildirir.',
+      whereUsed: 'Bariyeri bulunmayan tren yolu geçişlerinin öncesinde.',
+      shape: SignShape.triangle, icon: Icons.train_rounded,
+    ),
+    TrafficSign(
+      id: 'th_027', code: 'TU-27', category: catSignTehlike,
+      name: 'Uçak Geçebilir',
+      meaning: 'Yol üzerinde alçaktan uçan uçaklar bulunabileceğini bildirir.',
+      whereUsed: 'Havaalanı çevresi ve pist yaklaşım hatlarına yakın yollarda.',
+      shape: SignShape.triangle, icon: Icons.flight_rounded,
+    ),
   ];
 
   static const List<TrafficSign> tanzim = [
@@ -3721,6 +3763,27 @@ class TrafficSignBank {
       meaning: 'Belirtilen ağırlığın üzerindeki taşıtların bu yolu kullanamayacağını belirtir.',
       whereUsed: 'Zayıf altyapılı köprü ve yol kesimlerinde.',
       shape: SignShape.circleRed, icon: Icons.scale_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_011', code: 'TT-32', category: catSignTanzim,
+      name: 'Dingil Ağırlığı Sınırlaması',
+      meaning: 'Belirtilen dingil ağırlığının üzerindeki taşıtların yasaklandığını belirtir.',
+      whereUsed: 'Zayıf altyapılı köprü ve menfezlerde.',
+      shape: SignShape.circleRed, icon: Icons.fire_truck_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_012', code: 'TT-33', category: catSignTanzim,
+      name: 'Araçlar Arası Mesafe Sınırlaması',
+      meaning: 'Ardışık araçlar arasında bırakılması gereken minimum mesafeyi belirtir.',
+      whereUsed: 'Otoyollarda yoğun ve hızlı trafik kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.linear_scale_rounded,
+    ),
+    TrafficSign(
+      id: 'ta_013', code: 'TT-34', category: catSignTanzim,
+      name: 'Gümrüğe Kadar Durulmaz',
+      meaning: 'Gümrük noktasına kadar duraklama yapılamayacağını belirtir.',
+      whereUsed: 'Sınır kapısına yaklaşan yol kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.no_stroller_rounded,
     ),
   ];
 
@@ -3830,6 +3893,41 @@ class TrafficSignBank {
       whereUsed: 'Alçak tünel, köprü altı ve viyadük geçişlerinde.',
       shape: SignShape.circleRed, icon: Icons.height_rounded,
     ),
+    TrafficSign(
+      id: 'ya_016', code: 'TT-17', category: catSignYasak,
+      name: 'At Arabası Giremez',
+      meaning: 'Hayvan koşulu araçların bu yola giremeyeceğini belirtir.',
+      whereUsed: 'Hızlı ve yoğun trafik akışı olan güzergahlarda.',
+      shape: SignShape.circleRed, icon: Icons.other_houses_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_017', code: 'TT-18', category: catSignYasak,
+      name: 'Motorlu Taşıt Giremez',
+      meaning: 'Her türlü motorlu taşıtın bu yola giremeyeceğini belirtir.',
+      whereUsed: 'Yaya ve bisiklet öncelikli bölgelerde.',
+      shape: SignShape.circleRed, icon: Icons.directions_car_filled_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_018', code: 'TT-19', category: catSignYasak,
+      name: 'Sollama Yapılmaz (Kamyon)',
+      meaning: 'Kamyonların öndeki taşıtı geçmesinin yasak olduğunu belirtir.',
+      whereUsed: 'Ağır taşıt trafiğinin yoğun olduğu otoyol kesimlerinde.',
+      shape: SignShape.circleRed, icon: Icons.local_shipping_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_019', code: 'TT-20', category: catSignYasak,
+      name: 'Asgari Hız Sınırlamasının Sonu',
+      meaning: 'Önceden belirtilen asgari hız zorunluluğunun sona erdiğini belirtir.',
+      whereUsed: 'Otoyol ve hızlı yol kesimlerinin bitiminde.',
+      shape: SignShape.circleRed, icon: Icons.speed_rounded,
+    ),
+    TrafficSign(
+      id: 'ya_020', code: 'TT-21', category: catSignYasak,
+      name: 'Duraklama Yasağının Başlangıcı',
+      meaning: 'Belirtilen noktadan itibaren duraklamanın yasak olduğunu belirtir.',
+      whereUsed: 'Dar cadde ve toplu taşıma güzergahlarında.',
+      shape: SignShape.circleRed, icon: Icons.do_not_step_rounded,
+    ),
   ];
 
   static const List<TrafficSign> mecburi = [
@@ -3895,6 +3993,27 @@ class TrafficSignBank {
       meaning: 'Bu yolun yalnızca motosikletliler tarafından kullanılması gerektiğini belirtir.',
       whereUsed: 'Ayrılmış motosiklet şeridi bulunan güzergahlarda.',
       shape: SignShape.circleBlue, icon: Icons.two_wheeler_rounded,
+    ),
+    TrafficSign(
+      id: 'me_010', code: 'MY-10', category: catSignMecburi,
+      name: 'Asgari Hız Sınırı',
+      meaning: 'Levhada yazan değerin altında seyredilemeyeceğini belirtir.',
+      whereUsed: 'Otoyol sol/geçiş şeritlerinde.',
+      shape: SignShape.circleBlue, icon: Icons.speed_rounded, overlayText: '40',
+    ),
+    TrafficSign(
+      id: 'me_011', code: 'MY-11', category: catSignMecburi,
+      name: 'Zincirli Lastik Kullanma Zorunluluğu Sonu',
+      meaning: 'Zincir takma zorunluluğunun sona erdiği noktayı belirtir.',
+      whereUsed: 'Kar bölgesi çıkışlarında.',
+      shape: SignShape.circleBlue, icon: Icons.ac_unit_rounded,
+    ),
+    TrafficSign(
+      id: 'me_012', code: 'MY-12', category: catSignMecburi,
+      name: 'Yaya ve Bisiklet Yolu Ayrılmış',
+      meaning: 'Yaya ve bisiklet yollarının ayrı şeritler halinde düzenlendiğini belirtir.',
+      whereUsed: 'Ortak kullanılan ancak şeritle ayrılmış yollarda.',
+      shape: SignShape.circleBlue, icon: Icons.fork_right_rounded,
     ),
   ];
 
@@ -3983,6 +4102,34 @@ class TrafficSignBank {
       whereUsed: 'Turistik bölge girişleri ve dinlenme tesislerinde.',
       shape: SignShape.squareBlue, icon: Icons.info_outline_rounded,
     ),
+    TrafficSign(
+      id: 'bi_013', code: 'B-32', category: catSignBilgi,
+      name: 'Karayolu Numarası',
+      meaning: 'Bulunulan devlet/il yolunun resmi numarasını belirtir.',
+      whereUsed: 'Şehirlerarası yollar boyunca düzenli aralıklarla.',
+      shape: SignShape.squareBlue, icon: Icons.confirmation_number_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_014', code: 'B-34', category: catSignBilgi,
+      name: 'Yön Levhası',
+      meaning: 'Yaklaşan kavşakta hangi yönlerin hangi yerleşime çıktığını belirtir.',
+      whereUsed: 'Kavşak öncesi yönlendirme noktalarında.',
+      shape: SignShape.squareBlue, icon: Icons.signpost_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_015', code: 'B-35', category: catSignBilgi,
+      name: 'Yerleşim Yeri Girişi',
+      meaning: 'Bir yerleşim biriminin sınırına girildiğini belirtir.',
+      whereUsed: 'Şehir, kasaba ve köy girişlerinde.',
+      shape: SignShape.squareBlue, icon: Icons.location_city_rounded,
+    ),
+    TrafficSign(
+      id: 'bi_016', code: 'B-36', category: catSignBilgi,
+      name: 'Yerleşim Yeri Çıkışı',
+      meaning: 'Bir yerleşim biriminin sınırından çıkıldığını belirtir.',
+      whereUsed: 'Şehir, kasaba ve köy çıkışlarında.',
+      shape: SignShape.squareBlue, icon: Icons.location_city_rounded,
+    ),
   ];
 
   static const List<TrafficSign> park = [
@@ -4041,6 +4188,20 @@ class TrafficSignBank {
       meaning: 'Alanın yalnızca motosiklet park etmeye ayrıldığını belirtir.',
       whereUsed: 'Şehir merkezi ve yoğun bölgelerdeki ayrılmış park alanlarında.',
       shape: SignShape.circleBlue, icon: Icons.two_wheeler_rounded,
+    ),
+    TrafficSign(
+      id: 'pa_009', code: 'P-9', category: catSignPark,
+      name: 'Çekici ile Kaldırılır',
+      meaning: 'Kurallara aykırı park edilen araçların çekici ile kaldırılacağını belirtir.',
+      whereUsed: 'Sık ihlal yapılan ve sıkı denetlenen bölgelerde.',
+      shape: SignShape.circleRed, icon: Icons.local_shipping_rounded,
+    ),
+    TrafficSign(
+      id: 'pa_010', code: 'P-10', category: catSignPark,
+      name: 'Tek Numaralı Günlerde Park',
+      meaning: 'Ayın tek günlerinde park edilebileceğini belirtir.',
+      whereUsed: 'Dar sokaklarda sıralı park uygulaması olan bölgelerde.',
+      shape: SignShape.circleBlue, icon: Icons.filter_1_rounded,
     ),
   ];
 
@@ -4101,6 +4262,20 @@ class TrafficSignBank {
       whereUsed: 'Otoyol boyunca yönlendirme amaçlı düzenli aralıklarla.',
       shape: SignShape.squareBlue, icon: Icons.confirmation_number_rounded,
     ),
+    TrafficSign(
+      id: 'ot_009', code: 'O-9', category: catSignOtoyol,
+      name: 'Sonraki Çıkış Mesafesi',
+      meaning: 'Bir sonraki otoyol çıkışına kalan mesafeyi belirtir.',
+      whereUsed: 'Çıkışlara yaklaşan otoyol kesimlerinde.',
+      shape: SignShape.squareBlue, icon: Icons.exit_to_app_rounded,
+    ),
+    TrafficSign(
+      id: 'ot_010', code: 'O-10', category: catSignOtoyol,
+      name: 'Servis Alanı',
+      meaning: 'Yakında yakıt, market ve dinlenme hizmeti veren bir servis alanı olduğunu belirtir.',
+      whereUsed: 'Uzun otoyol güzergahlarında belirli aralıklarla.',
+      shape: SignShape.squareBlue, icon: Icons.storefront_rounded,
+    ),
   ];
 
   static const List<TrafficSign> yolCalisma = [
@@ -4159,6 +4334,20 @@ class TrafficSignBank {
       meaning: 'Çalışma alanında geçici trafik ışığı ile yönetim yapıldığını belirtir.',
       whereUsed: 'Tek şeride düşen ve sırayla geçiş yapılan çalışma bölgelerinde.',
       shape: SignShape.diamondYellow, icon: Icons.traffic_rounded,
+    ),
+    TrafficSign(
+      id: 'yc_009', code: 'YC-9', category: catSignYolCalisma,
+      name: 'Ağır İş Makinesi Çıkabilir',
+      meaning: 'Şantiye alanından yola ağır iş makinesi çıkabileceğini belirtir.',
+      whereUsed: 'Şantiye giriş/çıkış noktalarına yakın yol kesimlerinde.',
+      shape: SignShape.diamondYellow, icon: Icons.precision_manufacturing_rounded,
+    ),
+    TrafficSign(
+      id: 'yc_010', code: 'YC-10', category: catSignYolCalisma,
+      name: 'Çalışma Alanı Sonu',
+      meaning: 'Yol çalışması bölgesinin sona erdiğini ve normal trafik kurallarının geçerli olacağını belirtir.',
+      whereUsed: 'Şantiye/çalışma alanının bittiği noktada.',
+      shape: SignShape.diamondYellow, icon: Icons.check_circle_outline_rounded,
     ),
   ];
 
@@ -4285,6 +4474,14 @@ class _OctagonClipper extends CustomClipper<Path> {
 //  SECTION: widgets/sign_badge.dart
 //  Levhayı gerçek görsel dosyası kullanmadan şekil + renk + ikon
 //  ile çizen widget.
+//
+//  DÜZELTME: Önceki sürümde iç şekil sadece üstten "padding" ile
+//  küçültülüyordu; bu da üçgen/eşkenar dörtgen gibi şekillerde
+//  çerçevenin eşit kalınlıkta olmamasına (şeklin bozuk görünmesine)
+//  yol açıyordu. Artık iç şekil Transform.scale ile TAM ORTADAN
+//  küçültülüyor, böylece kenarlıklar her yönde eşit kalınlıkta
+//  çiziliyor ve levhalar gerçek trafik levhalarıyla birebir aynı
+//  görünüyor.
 // ------------------------------------------------------------
 
 class TrafficSignBadge extends StatelessWidget {
@@ -4296,61 +4493,108 @@ class TrafficSignBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (sign.shape) {
       case SignShape.triangle:
-        return _shaped(clipper: const _TriangleClipper(), fill: Colors.white, border: kDanger,
-            iconColor: const Color(0xFF1A1A1A), padTop: size * 0.30);
+        return _shaped(
+          clipper: const _TriangleClipper(),
+          fill: Colors.white,
+          border: kDanger,
+          iconColor: const Color(0xFF1A1A1A),
+          innerScale: 0.82,
+          contentShift: size * 0.06, // üçgende görsel ağırlık merkezini aşağı kaydır
+        );
       case SignShape.invertedTriangle:
-        return _shaped(clipper: const _InvertedTriangleClipper(), fill: Colors.white, border: kDanger,
-            iconColor: const Color(0xFF1A1A1A), padTop: size * 0.05, padBottom: size * 0.25);
+        return _shaped(
+          clipper: const _InvertedTriangleClipper(),
+          fill: Colors.white,
+          border: kDanger,
+          iconColor: const Color(0xFF1A1A1A),
+          innerScale: 0.82,
+          contentShift: -size * 0.06,
+        );
       case SignShape.diamondYellow:
-        return _shaped(clipper: const _DiamondClipper(), fill: const Color(0xFFF5B942), border: const Color(0xFF1A1A1A),
-            iconColor: const Color(0xFF1A1A1A));
+        return _shaped(
+          clipper: const _DiamondClipper(),
+          fill: const Color(0xFFF5B942),
+          border: const Color(0xFF1A1A1A),
+          iconColor: const Color(0xFF1A1A1A),
+          innerScale: 0.86,
+        );
       case SignShape.octagon:
-        return _shaped(clipper: const _OctagonClipper(), fill: kDanger, border: Colors.white,
-            iconColor: Colors.white);
+        return _shaped(
+          clipper: const _OctagonClipper(),
+          fill: kDanger,
+          border: Colors.white,
+          iconColor: Colors.white,
+          innerScale: 0.90,
+        );
       case SignShape.circleRed:
-        return _circleOrSquare(isCircle: true, fill: Colors.white, border: kDanger,
-            iconColor: const Color(0xFF1A1A1A), borderWidth: size * 0.12);
+        return _circleOrSquare(
+          isCircle: true,
+          fill: Colors.white,
+          border: kDanger,
+          iconColor: const Color(0xFF1A1A1A),
+          borderWidth: size * 0.10,
+        );
       case SignShape.circleBlue:
-        return _circleOrSquare(isCircle: true, fill: kNavyAccent, border: Colors.white,
-            iconColor: Colors.white, borderWidth: size * 0.03);
+        return _circleOrSquare(
+          isCircle: true,
+          fill: kNavyAccent,
+          border: Colors.white,
+          iconColor: Colors.white,
+          borderWidth: size * 0.03,
+        );
       case SignShape.squareBlue:
-        return _circleOrSquare(isCircle: false, fill: kNavyAccent, border: Colors.white,
-            iconColor: Colors.white, borderWidth: size * 0.03);
+        return _circleOrSquare(
+          isCircle: false,
+          fill: kNavyAccent,
+          border: Colors.white,
+          iconColor: Colors.white,
+          borderWidth: size * 0.03,
+        );
     }
   }
 
+  /// Üçgen / ters üçgen / eşkenar dörtgen / sekizgen gibi özel şekiller
+  /// için: dış şekil kenarlık rengiyle, iç şekil ise TAM ORTADAN
+  /// (Transform.scale ile) küçültülerek dolgu rengiyle çizilir. Böylece
+  /// çerçeve kalınlığı her kenarda eşittir ve şekil bozulmaz.
   Widget _shaped({
     required CustomClipper<Path> clipper,
     required Color fill,
     required Color border,
     required Color iconColor,
-    double padTop = 0,
-    double padBottom = 0,
+    required double innerScale,
+    double contentShift = 0,
   }) {
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(alignment: Alignment.center, children: [
-        ClipPath(
-          clipper: clipper,
-          child: Container(color: border),
-        ),
-        Padding(
-          padding: EdgeInsets.only(top: size * 0.08),
-          child: ClipPath(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Dış şekil = kenarlık rengi (tüm alanı kaplar)
+          ClipPath(
             clipper: clipper,
-            child: SizedBox(
-              width: size - size * 0.14,
-              height: size - size * 0.14,
-              child: Container(color: fill),
+            child: Container(color: border),
+          ),
+          // İç şekil = merkezden ölçeklenmiş dolgu rengi -> eşit çerçeve
+          Transform.scale(
+            scale: innerScale,
+            child: ClipPath(
+              clipper: clipper,
+              child: Container(
+                width: size,
+                height: size,
+                color: fill,
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(top: padTop, bottom: padBottom),
-          child: _content(iconColor),
-        ),
-      ]),
+          // İkon / metin, şeklin görsel ağırlık merkezine göre hafifçe kaydırılır
+          Transform.translate(
+            offset: Offset(0, contentShift),
+            child: _content(iconColor),
+          ),
+        ],
+      ),
     );
   }
 
