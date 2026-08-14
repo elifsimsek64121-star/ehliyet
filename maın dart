@@ -265,6 +265,13 @@ class AppState extends ChangeNotifier {
   Map<Cat, int> catScores = {};
   List<ExamResult> history = [];
 
+  // ── Yanlış soru takibi ──────────────────────────────────────
+  Set<String> wrongIds = {};
+
+  // ── Günlük hedef takibi ─────────────────────────────────────
+  int solvedToday = 0;
+  DateTime? _lastSolveDay;
+
   // ── Ayarlar (Settings) ──────────────────────────────────────
   bool notificationsEnabled = true;
   bool darkMode = true;
@@ -277,14 +284,44 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void answer(bool ok, Cat cat) {
+  /// [qid] verilirse yanlış cevaplanan sorular otomatik olarak
+  /// wrongIds listesine eklenir / doğru cevaplanınca çıkarılır.
+  void answer(bool ok, Cat cat, [String? qid]) {
+    _bumpDailyCounter();
+
     totalSolved++;
     if (ok) {
       totalCorrect++;
       xp += 10;
       catScores[cat] = (catScores[cat] ?? 0) + 1;
+      if (qid != null) wrongIds.remove(qid);
+    } else {
+      if (qid != null) wrongIds.add(qid);
     }
     level = (xp / 500).floor() + 1;
+    notifyListeners();
+  }
+
+  void _bumpDailyCounter() {
+    final today = DateTime.now();
+    final isSameDay = _lastSolveDay != null &&
+        _lastSolveDay!.year == today.year &&
+        _lastSolveDay!.month == today.month &&
+        _lastSolveDay!.day == today.day;
+    if (!isSameDay) {
+      solvedToday = 0;
+      _lastSolveDay = today;
+    }
+    solvedToday++;
+  }
+
+  void markCorrectedOut(String id) {
+    wrongIds.remove(id);
+    notifyListeners();
+  }
+
+  void clearWrongs() {
+    wrongIds.clear();
     notifyListeners();
   }
 
@@ -885,9 +922,7 @@ class _QuickActions extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: _ActBtn('Yanlışlarım', Icons.close_rounded, C.err, () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Yanlış takibi yakında geliyor!')),
-              );
+              _go(context, WrongAnswersScreen(s: s));
             }),
           ),
         ],
@@ -1321,7 +1356,7 @@ class _TestScreenState extends State<TestScreen>
       _answers[_idx] = i;
       _correct[_idx] = ok;
     });
-    widget.s.answer(ok, cur.cat);
+    widget.s.answer(ok, cur.cat, cur.id);
     if (!ok) _ac.forward(from: 0);
   }
 
@@ -5304,6 +5339,428 @@ class _SignQuizResultScreen extends StatelessWidget {
             ]),
           ]),
         ),
+      ),
+    );
+  }
+}
+// ══════════════════════════════════════════════════════════════════
+//  SÜRVOX — PROFESYONEL EK ÖZELLİKLER
+//  Bu dosya main.dart'taki Q, Cat, CatX, C, AppState, QB, TestScreen
+//  sınıflarını kullanır. AppState artık wrongIds / solvedToday /
+//  markCorrectedOut / clearWrongs alan-metodlarını içerir.
+// ══════════════════════════════════════════════════════════════════
+// ────────────────────────────────────────────────────────────────
+// 1) YANLIŞLARIM — otomatik yanlış soru takibi ve tekrar çözme
+// ────────────────────────────────────────────────────────────────
+class WrongAnswersScreen extends StatelessWidget {
+  final AppState s;
+  const WrongAnswersScreen({super.key, required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: s,
+      builder: (_, __) {
+        final list = QB.all.where((q) => s.wrongIds.contains(q.id)).toList();
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Yanlışlarım'),
+            actions: [
+              if (list.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep_rounded),
+                  tooltip: 'Listeyi temizle',
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      backgroundColor: C.card,
+                      title: const Text('Emin misiniz?',
+                          style: TextStyle(color: C.txt)),
+                      content: const Text(
+                        'Yanlış soru listeniz tamamen temizlenecek.',
+                        style: TextStyle(color: C.txt2),
+                      ),
+                      actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Vazgeç')),
+                        TextButton(
+                          onPressed: () {
+                            s.clearWrongs();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Temizle',
+                              style: TextStyle(color: C.errLight)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          body: list.isEmpty
+              ? const _EmptyState(
+                  icon: Icons.celebration_rounded,
+                  title: 'Harika, yanlışınız yok!',
+                  subtitle:
+                      'Yanlış yaptığınız sorular otomatik olarak burada\nbirikir, istediğiniz zaman tekrar çözebilirsiniz.',
+                )
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TestScreen(
+                                  qs: list, s: s, title: 'Yanlışlarımı Çöz'),
+                            ),
+                          ),
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: Text('${list.length} Soruyu Tekrar Çöz'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: C.err,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (_, i) {
+                          final q = list[i];
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: C.card,
+                              borderRadius: BorderRadius.circular(14),
+                              border:
+                                  Border.all(color: q.cat.color.withOpacity(.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: q.cat.color.withOpacity(.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(q.cat.icon,
+                                      color: q.cat.color, size: 18),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    q.text,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        color: C.txt, fontSize: 13),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close_rounded,
+                                      color: C.txt2, size: 18),
+                                  tooltip: 'Listeden çıkar',
+                                  onPressed: () => s.markCorrectedOut(q.id),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title, subtitle;
+  const _EmptyState(
+      {required this.icon, required this.title, required this.subtitle});
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 64, color: C.txt2),
+            const SizedBox(height: 16),
+            Text(title,
+                style: const TextStyle(
+                    color: C.txt, fontWeight: FontWeight.w800, fontSize: 17)),
+            const SizedBox(height: 8),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(color: C.txt2, fontSize: 13, height: 1.5)),
+          ],
+        ),
+      );
+}
+
+// ────────────────────────────────────────────────────────────────
+// 2) SORU ARAMA — tüm soru bankasında anlık arama
+// ────────────────────────────────────────────────────────────────
+class QuestionSearchDelegate extends SearchDelegate<Q?> {
+  final AppState s;
+  QuestionSearchDelegate({required this.s});
+
+  @override
+  String get searchFieldLabel => 'Soru veya kelime ara...';
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        if (query.isNotEmpty)
+          IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => close(context, null),
+      );
+
+  List<Q> _results() {
+    if (query.trim().length < 2) return [];
+    final q = query.toLowerCase();
+    return QB.all
+        .where((e) =>
+            e.text.toLowerCase().contains(q) ||
+            e.explanation.toLowerCase().contains(q))
+        .take(40)
+        .toList();
+  }
+
+  @override
+  Widget buildResults(BuildContext context) => _list(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _list(context);
+
+  Widget _list(BuildContext context) {
+    final res = _results();
+    if (query.trim().length < 2) {
+      return const Center(
+          child: Text('En az 2 karakter yazın', style: TextStyle(color: C.txt2)));
+    }
+    if (res.isEmpty) {
+      return const Center(
+          child: Text('Sonuç bulunamadı', style: TextStyle(color: C.txt2)));
+    }
+    return Container(
+      color: C.bg,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(12),
+        itemCount: res.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (_, i) {
+          final item = res[i];
+          return Material(
+            color: C.card,
+            borderRadius: BorderRadius.circular(12),
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              leading: Icon(item.cat.icon, color: item.cat.color),
+              title: Text(item.text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: C.txt, fontSize: 13)),
+              subtitle: Text(item.cat.label,
+                  style: TextStyle(color: item.cat.color, fontSize: 11)),
+              onTap: () {
+                close(context, item);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        TestScreen(qs: [item], s: s, title: 'Arama Sonucu'),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// 3) EN ZAYIF KONULAR — ek paket gerektirmeyen analiz kartı
+// ────────────────────────────────────────────────────────────────
+class WeakestTopicsCard extends StatelessWidget {
+  final AppState s;
+  const WeakestTopicsCard({super.key, required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = Cat.values.map((c) {
+      final total = QB.byCat(c).length;
+      final done = s.catScores[c] ?? 0;
+      final pct = total == 0 ? 0.0 : done / total;
+      return (c, pct);
+    }).toList()
+      ..sort((a, b) => a.$2.compareTo(b.$2));
+    final weakest = entries.take(3).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: C.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: C.warn.withOpacity(.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.priority_high_rounded, color: C.warn, size: 20),
+              SizedBox(width: 8),
+              Text('En Zayıf Konularınız',
+                  style: TextStyle(
+                      color: C.txt, fontWeight: FontWeight.w800, fontSize: 15)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...weakest.map((e) {
+            final cat = e.$1;
+            final pct = e.$2;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        TestScreen(qs: QB.byCat(cat), s: s, title: cat.label),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                        width: 110,
+                        child: Text(cat.label,
+                            style:
+                                const TextStyle(color: C.txt2, fontSize: 12))),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 8,
+                          backgroundColor: C.cardHi,
+                          valueColor: AlwaysStoppedAnimation(
+                            pct < .4
+                                ? C.errLight
+                                : (pct < .7 ? C.warn : C.okLight),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('${(pct * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                            color: C.txt,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 4),
+          const Text('Bir konuya dokunarak hemen çalışmaya başlayın.',
+              style: TextStyle(color: C.txt2, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// 4) GÜNLÜK HEDEF KARTI
+// ────────────────────────────────────────────────────────────────
+class DailyGoalCard extends StatelessWidget {
+  final AppState s;
+  final int goal;
+  const DailyGoalCard({super.key, required this.s, this.goal = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    final done = s.solvedToday.clamp(0, goal);
+    final pct = done / goal;
+    final complete = done >= goal;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [
+          (complete ? C.ok : C.primary).withOpacity(.25),
+          C.card,
+        ]),
+        borderRadius: BorderRadius.circular(20),
+        border:
+            Border.all(color: (complete ? C.okLight : C.pLight).withOpacity(.4)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: pct.clamp(0, 1),
+                  strokeWidth: 5,
+                  backgroundColor: C.cardHi,
+                  valueColor:
+                      AlwaysStoppedAnimation(complete ? C.okLight : C.pLight),
+                ),
+                Text(complete ? '✓' : '$done/$goal',
+                    style: TextStyle(
+                      color: complete ? C.okLight : C.txt,
+                      fontWeight: FontWeight.w800,
+                      fontSize: complete ? 20 : 11,
+                    )),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(complete ? 'Günlük hedef tamamlandı! 🎉' : 'Günlük Hedef',
+                    style: const TextStyle(
+                        color: C.txt, fontWeight: FontWeight.w800, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text(
+                  complete
+                      ? 'Yarın da devam et, seriyi bozma.'
+                      : '$goal soru çöz, serini koru 🔥 ${s.streak} gün',
+                  style: const TextStyle(color: C.txt2, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
