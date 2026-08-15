@@ -1,33 +1,28 @@
 name: sinav365_ehliyet
-description: "Sınav365 – Ehliyet Sınavı Hazırlık Uygulaması"
+description: Profesyonel Ehliyet Sınavı Hazırlık Uygulaması - Sınav365
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.5.7+16
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.6
   google_mobile_ads: ^5.1.0
-  google_fonts: ^6.2.1
-  shared_preferences: ^2.2.3
-  url_launcher: ^6.3.0
-  fl_chart: ^0.68.0
+  cupertino_icons: ^1.0.6
+  shared_preferences: ^2.3.3
+  in_app_purchase: ^3.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
-
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path: "assets/icons/app_icon.png"
-  adaptive_icon_background: "#061B3A"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  assets:
+    - assets/data/questions.json
+    - assets/data/topics.json
+    - assets/images/
+    - assets/images/sorular/
