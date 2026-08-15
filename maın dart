@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,11 @@ void main() async {
     ),
   );
   await QB.load();
+  await MobileAds.instance.initialize();
+  // Reklamları uygulama başlar başlamaz ön belleğe alıyoruz ki
+  // kullanıcı ilk ihtiyaç anında beklemesin.
+  AdManager.instance.preloadInterstitial();
+  AdManager.instance.preloadRewarded();
   runApp(const SurvoxApp());
 }
 
@@ -109,6 +115,176 @@ ThemeData get _theme => ThemeData(
     ),
   ),
 );
+
+// ══════════════════════════════════════════════════════════════════
+//  ADMOB REKLAM ALT YAPISI
+//  Tüm reklam birimi kimlikleri tek bir yerden yönetilir. Premium
+//  kullanıcılar için tüm reklamlar (AdManager.instance.isPremium=true
+//  olduğunda) otomatik olarak devre dışı kalır.
+// ══════════════════════════════════════════════════════════════════
+class AdIds {
+  AdIds._();
+  static const String banner = 'ca-app-pub-6551908952762916/2065982369';
+  static const String interstitial = 'ca-app-pub-6551908952762916/9670808516';
+  static const String native = 'ca-app-pub-6551908952762916/4364842648';
+  static const String rewarded = 'ca-app-pub-6551908952762916/8774860946';
+}
+
+class AdManager {
+  AdManager._();
+  static final AdManager instance = AdManager._();
+
+  /// MainShell içinde AppState değiştikçe güncellenir. true olduğunda
+  /// hiçbir reklam yüklenmez / gösterilmez.
+  bool isPremium = false;
+
+  InterstitialAd? _interstitialAd;
+  bool _interstitialLoading = false;
+
+  RewardedAd? _rewardedAd;
+  bool _rewardedLoading = false;
+
+  int _actionCount = 0;
+  static const int _interstitialFrequency = 2; // her 2 eylemde bir göster
+
+  void setPremium(bool value) {
+    if (isPremium == value) return;
+    isPremium = value;
+    if (isPremium) {
+      _interstitialAd?.dispose();
+      _interstitialAd = null;
+      _rewardedAd?.dispose();
+      _rewardedAd = null;
+    }
+  }
+
+  // ──────────────── GEÇİŞ (INTERSTITIAL) REKLAMI ────────────────
+  void preloadInterstitial() {
+    if (isPremium) return;
+    if (_interstitialAd != null || _interstitialLoading) return;
+    _interstitialLoading = true;
+    try {
+      InterstitialAd.load(
+        adUnitId: AdIds.interstitial,
+        request: const AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            _interstitialAd = ad;
+            _interstitialLoading = false;
+          },
+          onAdFailedToLoad: (error) {
+            _interstitialLoading = false;
+            _interstitialAd = null;
+          },
+        ),
+      );
+    } catch (_) {
+      // Reklam SDK'sı bir sebeple yüklenemezse uygulama çökmesin.
+      _interstitialLoading = false;
+      _interstitialAd = null;
+    }
+  }
+
+  /// Sıklık kontrolüyle (varsayılan: her 2 eylemde bir) geçiş reklamı
+  /// göstermeyi dener. Reklam hazır değilse veya kullanıcı Premium ise
+  /// doğrudan [onDone] çağrılır; akış asla bloklanmaz.
+  void maybeShowInterstitial({required bool isPremiumUser, VoidCallback? onDone}) {
+    setPremium(isPremiumUser);
+    if (isPremiumUser) {
+      onDone?.call();
+      return;
+    }
+    _actionCount++;
+    if (_actionCount % _interstitialFrequency != 0 || _interstitialAd == null) {
+      preloadInterstitial();
+      onDone?.call();
+      return;
+    }
+    final ad = _interstitialAd!;
+    _interstitialAd = null;
+    try {
+      ad.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (a) {
+          a.dispose();
+          preloadInterstitial();
+          onDone?.call();
+        },
+        onAdFailedToShowFullScreenContent: (a, err) {
+          a.dispose();
+          preloadInterstitial();
+          onDone?.call();
+        },
+      );
+      ad.show();
+    } catch (_) {
+      // Gösterim sırasında bir hata olursa akışı bozmadan devam et.
+      preloadInterstitial();
+      onDone?.call();
+    }
+  }
+
+  // ──────────────── ÖDÜLLÜ (REWARDED) REKLAM ────────────────
+  void preloadRewarded() {
+    if (isPremium) return;
+    if (_rewardedAd != null || _rewardedLoading) return;
+    _rewardedLoading = true;
+    try {
+      RewardedAd.load(
+        adUnitId: AdIds.rewarded,
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (ad) {
+            _rewardedAd = ad;
+            _rewardedLoading = false;
+          },
+          onAdFailedToLoad: (error) {
+            _rewardedLoading = false;
+            _rewardedAd = null;
+          },
+        ),
+      );
+    } catch (_) {
+      _rewardedLoading = false;
+      _rewardedAd = null;
+    }
+  }
+
+  bool get isRewardedReady => _rewardedAd != null;
+
+  void showRewarded({
+    required void Function(int amount) onReward,
+    required VoidCallback onUnavailable,
+  }) {
+    final ad = _rewardedAd;
+    if (isPremium || ad == null) {
+      preloadRewarded();
+      onUnavailable();
+      return;
+    }
+    _rewardedAd = null;
+    try {
+      ad.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (a) {
+          a.dispose();
+          preloadRewarded();
+        },
+        onAdFailedToShowFullScreenContent: (a, err) {
+          a.dispose();
+          preloadRewarded();
+          onUnavailable();
+        },
+      );
+      ad.show(
+        onUserEarnedReward: (ad, reward) {
+          onReward(reward.amount.toInt());
+        },
+      );
+    } catch (_) {
+      preloadRewarded();
+      onUnavailable();
+    }
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════
 //  ENUMS & EXTENSIONS
@@ -354,6 +530,13 @@ class AppState extends ChangeNotifier {
     language = v;
     notifyListeners();
   }
+
+  /// Ödüllü reklam izlendiğinde bonus XP eklemek için kullanılır.
+  void addXp(int amount) {
+    xp += amount;
+    level = (xp / 500).floor() + 1;
+    notifyListeners();
+  }
 }
 
 class ExamResult {
@@ -503,12 +686,12 @@ class _SplashState extends State<SplashScreen>
                     child: Column(
                       children: [
                         const Text(
-                          'SÜRVOX',
+                          'SINAV365',
                           style: TextStyle(
-                            fontSize: 46,
+                            fontSize: 42,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            letterSpacing: 6,
+                            letterSpacing: 4,
                           ),
                         ),
                         const Text(
@@ -519,11 +702,6 @@ class _SplashState extends State<SplashScreen>
                             letterSpacing: 3,
                             fontWeight: FontWeight.w600,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Türkiye\'nin #1 Sürücü Kursu Uygulaması',
-                          style: TextStyle(color: C.txt2, fontSize: 14),
                         ),
                         const SizedBox(height: 60),
                         SizedBox(
@@ -565,6 +743,8 @@ class MainShell extends StatelessWidget {
     return AnimatedBuilder(
       animation: s,
       builder: (_, __) {
+        // Premium durumu değiştikçe reklam yöneticisini senkronize et.
+        AdManager.instance.setPremium(s.isPremium);
         final pages = [
           HomeScreen(s: s),
           CategoryScreen(s: s),
@@ -716,6 +896,8 @@ class HomeScreen extends StatelessWidget {
                 _sec('Hızlı Başlat'),
                 const SizedBox(height: 12),
                 _QuickActions(s: s),
+                const SizedBox(height: 16),
+                _RewardedXpCard(s: s),
                 const SizedBox(height: 20),
                 _sec('Konu Kategorileri'),
                 const SizedBox(height: 12),
@@ -728,7 +910,9 @@ class HomeScreen extends StatelessWidget {
                 _sec('Başarım Rozetleri'),
                 const SizedBox(height: 12),
                 _BadgeRow(s: s),
-                const SizedBox(height: 100),
+                const SizedBox(height: 24),
+                const BannerAdWidget(),
+                const SizedBox(height: 80),
               ]),
             ),
           ),
@@ -888,9 +1072,16 @@ class _QuickActions extends StatelessWidget {
         children: [
           Expanded(
             child: _ActBtn('Rastgele\nTest', Icons.shuffle, C.primary, () {
+              final qs = QB.random(15);
+              if (qs.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Soru bankası henüz yüklenmedi.')),
+                );
+                return;
+              }
               _go(
                 context,
-                TestScreen(qs: QB.random(15), s: s, title: 'Rastgele Test'),
+                TestScreen(qs: qs, s: s, title: 'Rastgele Test'),
               );
             }),
           ),
@@ -978,6 +1169,117 @@ class _ActBtn extends StatelessWidget {
   );
 }
 
+// ══════════════════════════════════════════════════════════════════
+//  ÖDÜLLÜ REKLAM KARTI — Reklam izleyerek +50 XP kazanma
+// ══════════════════════════════════════════════════════════════════
+class _RewardedXpCard extends StatefulWidget {
+  final AppState s;
+  const _RewardedXpCard({required this.s});
+  @override
+  State<_RewardedXpCard> createState() => _RewardedXpCardState();
+}
+
+class _RewardedXpCardState extends State<_RewardedXpCard> {
+  bool _loading = false;
+
+  void _watch() {
+    if (widget.s.isPremium || _loading) return;
+    setState(() => _loading = true);
+    AdManager.instance.showRewarded(
+      onReward: (amount) {
+        widget.s.addXp(50);
+        if (!mounted) return;
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🎉 Reklam için +50 XP kazandınız!')),
+        );
+      },
+      onUnavailable: () {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reklam şu an hazır değil, birazdan tekrar deneyin.'),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.s.isPremium) return const SizedBox.shrink();
+    return GestureDetector(
+      onTap: _watch,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [C.gold, C.accent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(color: C.gold.withOpacity(.3), blurRadius: 14),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.ondemand_video_rounded,
+                color: Colors.black87,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Reklam İzle, +50 XP Kazan',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _loading
+                        ? 'Reklam yükleniyor...'
+                        : 'Kısa bir reklam izleyerek anında XP kazan',
+                    style: const TextStyle(color: Colors.black87, fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+            if (_loading)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.black87,
+                ),
+              )
+            else
+              const Icon(Icons.chevron_right_rounded, color: Colors.black87),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CatGrid extends StatelessWidget {
   final AppState s;
   const _CatGrid({required this.s});
@@ -1003,9 +1305,16 @@ class _CatGrid extends StatelessWidget {
             showDialog(context: context, builder: (_) => _PremiumDialog(s: s));
             return;
           }
+          final qs = QB.byCat(cat);
+          if (qs.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Bu kategoride henüz soru yok.')),
+            );
+            return;
+          }
           Navigator.push(
             context,
-            _slideRoute(TestScreen(qs: QB.byCat(cat), s: s, title: cat.label)),
+            _slideRoute(TestScreen(qs: qs, s: s, title: cat.label)),
           );
         },
         child: Container(
@@ -1199,6 +1508,7 @@ class CategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Konu Testleri')),
+    bottomNavigationBar: const BannerAdWidget(),
     body: ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: Cat.values.length,
@@ -1212,6 +1522,12 @@ class CategoryScreen extends StatelessWidget {
           onTap: () {
             if (locked) {
               showDialog(context: context, builder: (_) => _PremiumDialog(s: s));
+              return;
+            }
+            if (qs.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Bu kategoride henüz soru yok.')),
+              );
               return;
             }
             Navigator.push(
@@ -1326,6 +1642,9 @@ class _TestScreenState extends State<TestScreen>
   late AnimationController _ac;
   late Animation<double> _shake;
 
+  // Boş soru listesiyle açılırsa (ör. veri henüz yüklenmediyse) index
+  // erişiminde çökmemek için güvenli erişim sağlanır.
+  bool get _hasQuestions => widget.qs.isNotEmpty;
   Q get cur => widget.qs[_idx];
 
   @override
@@ -1373,6 +1692,18 @@ class _TestScreenState extends State<TestScreen>
   }
 
   void _showResult() {
+    // Sonuç ekranına geçmeden önce (sıklık kontrolüyle) geçiş reklamı
+    // gösterilmeye çalışılır; reklam olsun ya da olmasın akış devam eder.
+    AdManager.instance.maybeShowInterstitial(
+      isPremiumUser: widget.s.isPremium,
+      onDone: () {
+        if (!mounted) return;
+        _openResultSheet();
+      },
+    );
+  }
+
+  void _openResultSheet() {
     final ok = _correct.values.where((v) => v).length;
     final wr = _correct.values.where((v) => !v).length;
     final em = widget.qs.length - _answers.length;
@@ -1412,6 +1743,18 @@ class _TestScreenState extends State<TestScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasQuestions) {
+      // Soru listesi boşsa (ör. questions.json yüklenemediyse) uygulamayı
+      // çökertmek yerine kullanıcıya bilgi veren bir ekran gösterilir.
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
+        body: const _EmptyState(
+          icon: Icons.inbox_rounded,
+          title: 'Bu sette soru bulunamadı',
+          subtitle: 'Soru bankası yüklenemedi ya da bu kategoride\nhenüz soru eklenmemiş olabilir.',
+        ),
+      );
+    }
     final prog = (_idx + 1) / widget.qs.length;
     return Scaffold(
       appBar: AppBar(
@@ -1629,6 +1972,7 @@ class _TestScreenState extends State<TestScreen>
               ),
             ),
           ),
+          const BannerAdWidget(),
           Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -1673,7 +2017,7 @@ class _ResultSheet extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final sc = (ok * 100.0 / total).clamp(0.0, 100.0);
+    final sc = total == 0 ? 0.0 : (ok * 100.0 / total).clamp(0.0, 100.0);
     final pass = sc >= 70;
     return Padding(
       padding: const EdgeInsets.all(28),
@@ -1794,6 +2138,7 @@ class ExamScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Deneme Sınavı')),
+      bottomNavigationBar: const BannerAdWidget(),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -1810,10 +2155,16 @@ class ExamScreen extends StatelessWidget {
             '15 Soru • Süresiz • Rastgele',
             Icons.flash_on,
             C.accent,
-            () => _go(
-              context,
-              TestScreen(qs: QB.random(15), s: s, title: 'Hızlı Test'),
-            ),
+            () {
+              final qs = QB.random(15);
+              if (qs.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Soru bankası henüz yüklenmedi.')),
+                );
+                return;
+              }
+              _go(context, TestScreen(qs: qs, s: s, title: 'Hızlı Test'));
+            },
           ),
           const SizedBox(height: 14),
           _ExCard(
@@ -1822,10 +2173,16 @@ class ExamScreen extends StatelessWidget {
             Icons.whatshot,
             const Color(0xFFD32F2F),
             s.isPremium
-                ? () => _go(
-                    context,
-                    TestScreen(qs: QB.random(30), s: s, title: 'Süper Zor Mod'),
-                  )
+                ? () {
+                    final qs = QB.random(30);
+                    if (qs.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Soru bankası henüz yüklenmedi.')),
+                      );
+                      return;
+                    }
+                    _go(context, TestScreen(qs: qs, s: s, title: 'Süper Zor Mod'));
+                  }
                 : () => showDialog(
                     context: context,
                     builder: (_) => _PremiumDialog(s: s),
@@ -1840,7 +2197,9 @@ class ExamScreen extends StatelessWidget {
             C.purple,
             () => _hist(context),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
+          const NativeAdCard(),
+          const SizedBox(height: 6),
           if (s.history.isNotEmpty) ...[
             _sec('Son Sınavlar'),
             const SizedBox(height: 12),
@@ -2036,14 +2395,18 @@ class _RealExamState extends State<RealExamScreen> {
   void initState() {
     super.initState();
     _qs = QB.exam();
-    _t = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_remaining <= 0) {
-        t.cancel();
-        _finish();
-      } else {
-        setState(() => _remaining--);
-      }
-    });
+    // Soru bankası boşsa (ör. questions.json henüz yüklenmediyse) zamanlayıcı
+    // başlatılmaz; build() içinde kullanıcıya bilgi ekranı gösterilir.
+    if (_qs.isNotEmpty) {
+      _t = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (_remaining <= 0) {
+          t.cancel();
+          _finish();
+        } else {
+          setState(() => _remaining--);
+        }
+      });
+    }
   }
 
   @override
@@ -2061,6 +2424,7 @@ class _RealExamState extends State<RealExamScreen> {
 
   void _finish() {
     _t?.cancel();
+    if (_qs.isEmpty) return;
     int ok = 0, wr = 0;
     for (var i = 0; i < _qs.length; i++) {
       final a = _ans[i];
@@ -2079,14 +2443,32 @@ class _RealExamState extends State<RealExamScreen> {
       dur: Duration(seconds: 45 * 60 - _remaining),
     );
     widget.s.addResult(res);
-    Navigator.pushReplacement(
-      context,
-      _slideRoute(ExamResultScreen(res: res, s: widget.s)),
+    // Sınav sonucuna geçmeden önce (sıklık kontrollü) geçiş reklamı denenir.
+    AdManager.instance.maybeShowInterstitial(
+      isPremiumUser: widget.s.isPremium,
+      onDone: () {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          _slideRoute(ExamResultScreen(res: res, s: widget.s)),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_qs.isEmpty) {
+      // Soru bankası yüklenemediyse çökmek yerine bilgi ekranı göster.
+      return Scaffold(
+        appBar: AppBar(title: const Text('Deneme Sınavı')),
+        body: const _EmptyState(
+          icon: Icons.inbox_rounded,
+          title: 'Sınav soruları yüklenemedi',
+          subtitle: 'Soru bankası şu an kullanılamıyor.\nLütfen daha sonra tekrar deneyin.',
+        ),
+      );
+    }
     final q = _qs[_idx];
     return Scaffold(
       appBar: AppBar(
@@ -2512,7 +2894,9 @@ class _ExamResultState extends State<ExamResultScreen>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 36),
+                      const SizedBox(height: 24),
+                      const BannerAdWidget(),
+                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -2628,6 +3012,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const BannerAdWidget(),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -3029,7 +3414,8 @@ class _Settings extends StatelessWidget {
                 content: const Text(
                   'Verileriniz yalnızca uygulama içi ilerlemenizi (çözülen '
                   'sorular, sınav geçmişi, favoriler) takip etmek için '
-                  'cihazınızda tutulur ve KVKK\'ya uygun şekilde işlenir.',
+                  'cihazınızda tutulur ve KVKK\'ya uygun şekilde işlenir. '
+                  'Reklam gösterimi için AdMob altyapısı kullanılır.',
                   style: TextStyle(color: C.txt2, height: 1.4),
                 ),
                 actions: [
@@ -3045,7 +3431,7 @@ class _Settings extends StatelessWidget {
           _tile(
             Icons.share_rounded,
             'Arkadaşına Öner',
-            'Sürvox\'u paylaş',
+            'Sınav365\'i paylaş',
             C.pLight,
             () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -3256,7 +3642,7 @@ class _PremiumDialog extends StatelessWidget {
           const Text('👑', style: TextStyle(fontSize: 60)),
           const SizedBox(height: 12),
           const Text(
-            'Sürvox Premium',
+            'Sınav365 Premium',
             style: TextStyle(
               color: C.gold,
               fontWeight: FontWeight.w900,
@@ -3331,15 +3717,172 @@ PageRouteBuilder _slideRoute(Widget page) => PageRouteBuilder(
 );
 
 // ══════════════════════════════════════════════════════════════════
-//  KÜÇÜK ORTAK WIDGET'LAR  (Trafik Levhaları bölümü için)
+//  REKLAM WIDGET'LARI (Banner / Yerel Gelişmiş)
 // ══════════════════════════════════════════════════════════════════
 
-/// Gerçek reklam SDK'sı entegre edilmediği için basit bir yer tutucu.
-/// İleride bir reklam paketi eklenirse bu widget'ın içini doldurmak yeterli.
-class BannerAdWidget extends StatelessWidget {
+/// Gerçek AdMob banner reklamını yükleyip gösteren widget.
+/// Premium kullanıcılar için otomatik olarak hiçbir alan kaplamaz.
+class BannerAdWidget extends StatefulWidget {
   const BannerAdWidget({super.key});
   @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
+  State<BannerAdWidget> createState() => _BannerAdWidgetState();
+}
+
+class _BannerAdWidgetState extends State<BannerAdWidget> {
+  BannerAd? _bannerAd;
+  bool _isLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!AdManager.instance.isPremium) {
+      _loadAd();
+    }
+  }
+
+  void _loadAd() {
+    try {
+      _bannerAd = BannerAd(
+        adUnitId: AdIds.banner,
+        size: AdSize.banner,
+        request: const AdRequest(),
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            if (!mounted) {
+              ad.dispose();
+              return;
+            }
+            setState(() => _isLoaded = true);
+          },
+          onAdFailedToLoad: (ad, error) {
+            ad.dispose();
+            if (mounted) setState(() => _isLoaded = false);
+          },
+        ),
+      );
+      _bannerAd!.load();
+    } catch (_) {
+      // Reklam SDK'sı ile ilgili beklenmeyen bir sorun uygulamayı
+      // çökertmesin; banner sadece görünmez kalır.
+      _isLoaded = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (AdManager.instance.isPremium || !_isLoaded || _bannerAd == null) {
+      return const SizedBox.shrink();
+    }
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        alignment: Alignment.center,
+        color: C.surface,
+        child: AdWidget(ad: _bannerAd!),
+      ),
+    );
+  }
+}
+
+/// AdMob "Yerel Gelişmiş" (Native Advanced) reklam kartı.
+///
+/// ÖNEMLİ / ÇÖKME DÜZELTMESİ:
+/// Native reklamların Flutter tarafında gösterilebilmesi için Android/iOS
+/// projelerinde bir NativeAdFactory kaydı (factoryId: 'listTileNativeAdFactory')
+/// yapılması GEREKİR. Bu proje yalnızca main.dart olarak paylaşıldığı ve bu
+/// native kayıt tamamlanmadığı sürece, bu widget'ın gerçek native reklamı
+/// yüklemeye/render etmeye çalışması uygulamanın (özellikle Android'de)
+/// "kayıtsız platform view" hatasıyla ANINDA KAPANMASINA sebep olur.
+///
+/// Bu yüzden, native reklam denemesi şimdilik güvenli şekilde devre dışı
+/// bırakılmıştır; widget hiçbir şey render etmez ve uygulama çökmez.
+/// Native reklamı native tarafta (Android: MainActivity/Application içinde
+/// GoogleMobileAdsPlugin.registerNativeAdFactory, iOS: AppDelegate içinde
+/// FLTGoogleMobileAdsPlugin.registerNativeAdFactory) kayıt ettikten sonra
+/// aşağıdaki `_nativeAdsEnabled` sabitini `true` yapabilirsiniz.
+class NativeAdCard extends StatefulWidget {
+  const NativeAdCard({super.key});
+  @override
+  State<NativeAdCard> createState() => _NativeAdCardState();
+}
+
+class _NativeAdCardState extends State<NativeAdCard> {
+  // Native reklam fabrikası (factoryId) native tarafta kayıtlı OLMADAN bu
+  // değeri true yapmayın — aksi halde uygulama çöker.
+  static const bool _nativeAdsEnabled = false;
+
+  NativeAd? _nativeAd;
+  bool _isLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_nativeAdsEnabled && !AdManager.instance.isPremium) {
+      _loadAd();
+    }
+  }
+
+  void _loadAd() {
+    try {
+      _nativeAd = NativeAd(
+        adUnitId: AdIds.native,
+        request: const AdRequest(),
+        factoryId: 'listTileNativeAdFactory',
+        listener: NativeAdListener(
+          onAdLoaded: (ad) {
+            if (!mounted) {
+              ad.dispose();
+              return;
+            }
+            setState(() => _isLoaded = true);
+          },
+          onAdFailedToLoad: (ad, error) {
+            ad.dispose();
+            if (mounted) setState(() => _isLoaded = false);
+          },
+        ),
+      );
+      _nativeAd!.load();
+    } catch (_) {
+      // Native fabrika kayıtlı değilse burada da güvenli şekilde vazgeçilir.
+      _isLoaded = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nativeAd?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_nativeAdsEnabled ||
+        AdManager.instance.isPremium ||
+        !_isLoaded ||
+        _nativeAd == null) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: C.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: C.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: AdWidget(ad: _nativeAd!),
+    );
+  }
 }
 
 enum OptionState { idle, selected, correct, wrong }
@@ -4700,6 +5243,8 @@ class _SignCategoryListScreenState extends State<SignCategoryListScreen> {
         children: [
           Text('${TrafficSignBank.all.length} levha · 8 kategori',
               style: ts(size: 12.5, color: isDark ? Colors.white38 : Colors.black38)),
+          const SizedBox(height: 12),
+          const NativeAdCard(),
           const SizedBox(height: 12),
           ...kSignCategoryTitles.keys.map((cat) {
             final catSigns = TrafficSignBank.forCategory(cat);
