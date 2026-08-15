@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,10 +13,13 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xFFFFFFFF),
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
   await QB.load();
+  await TopicsBank.load();
   await MobileAds.instance.initialize();
   // Reklamları uygulama başlar başlamaz ön belleğe alıyoruz ki
   // kullanıcı ilk ihtiyaç anında beklemesin.
@@ -24,40 +29,49 @@ void main() async {
 }
 
 // ══════════════════════════════════════════════════════════════════
-//  COLORS & THEME
+//  COLORS & THEME — Profesyonel açık (beyaz) tema
 // ══════════════════════════════════════════════════════════════════
 class C {
-  static const bg = Color(0xFF050D1A);
-  static const surface = Color(0xFF0C1B2E);
-  static const card = Color(0xFF112240);
-  static const cardHi = Color(0xFF1A3357);
-  static const primary = Color(0xFF1565C0);
-  static const pLight = Color(0xFF42A5F5);
-  static const pDark = Color(0xFF0D47A1);
-  static const accent = Color(0xFFFF6F00);
-  static const aLight = Color(0xFFFFB300);
-  static const gold = Color(0xFFFFD700);
-  static const ok = Color(0xFF2E7D32);
-  static const okLight = Color(0xFF66BB6A);
-  static const err = Color(0xFFC62828);
-  static const errLight = Color(0xFFEF5350);
-  static const warn = Color(0xFFF57F17);
-  static const txt = Color(0xFFE8F0FE);
-  static const txt2 = Color(0xFF90A4AE);
-  static const purple = Color(0xFF7B1FA2);
-  static const teal = Color(0xFF0097A7);
-  static const border = Color(0xFF1A3357);
+  // Arka planlar
+  static const bg = Color(0xFFF0F4F8);
+  static const surface = Color(0xFFFFFFFF);
+  static const card = Color(0xFFFFFFFF);
+  static const cardHi = Color(0xFFF0F3F7);
 
+  // Ana marka
+  static const primary = Color(0xFF1565C0);
+  static const pLight = Color(0xFF3B82F6);
+  static const pDark = Color(0xFF1E3A8A);
+
+  // Vurgu
+  static const accent = Color(0xFFF59E0B);
+  static const aLight = Color(0xFFFBBF24);
+  static const gold = Color(0xFFEAB308);
+
+  // Durum
+  static const ok = Color(0xFF16A34A);
+  static const okLight = Color(0xFF22C55E);
+  static const err = Color(0xFFDC2626);
+  static const errLight = Color(0xFFEF4444);
+  static const warn = Color(0xFFD97706);
+
+  // Metin
+  static const txt = Color(0xFF0F172A);
+  static const txt2 = Color(0xFF64748B);
+
+  // Diğer
+  static const purple = Color(0xFF7C3AED);
+  static const teal = Color(0xFF0D9488);
+  static const border = Color(0xFFD0D7E2);
+
+  // Header gradyanı (açık temada yumuşak mavi)
   static const gradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0A1628), Color(0xFF0D47A1), Color(0xFF1565C0)],
+    colors: [Color(0xFF1E5BB8), Color(0xFF2563EB), Color(0xFF3B82F6)],
   );
 }
 
-// Renk takma adları — aşağıdaki "Trafik Levhaları" bölümü bu kısa isimlerle
-// çağrılıyor; hepsi C sınıfındaki tek tip renk paletine bağlanır ki tüm
-// uygulama tutarlı görünsün.
 const Color kWarning = C.warn;
 const Color kNavyAccent = C.primary;
 const Color kDanger = C.err;
@@ -70,7 +84,20 @@ const Color kCard = C.card;
 const Color kCardElevated = C.cardHi;
 const Color kBorder = C.border;
 
-/// Küçük metin stili yardımcıları (Trafik Levhaları bölümünde kullanılıyor).
+// ── Karanlık tema kart/yüzey renkleri ───────────────────────────
+// ÖNEMLİ: Yukarıdaki kSurface/kCard/kCardElevated/kBorder sabitleri
+// SADECE açık temanın renkleridir (C.surface/C.card beyazdır).
+// "Levha" (trafik levhaları) ekranlarında bu sabitler yanlışlıkla
+// "isDark ? kSurfaceDark : ..." şeklinde karanlık tema için de
+// kullanılmıştı; sonuç olarak karanlık modda arka plan/kart BEYAZ
+// kalıyor, üzerindeki yazılar ise "isDark ? Colors.white : ..."
+// olduğu için de BEYAZ oluyordu — beyaz üstüne beyaz yazı görünmez
+// hale geliyordu. Karanlık temada onun yerine bu sabitler kullanılır.
+const Color kSurfaceDark = Color(0xFF0B1220);
+const Color kCardDark = Color(0xFF152238);
+const Color kCardElevatedDark = Color(0xFF1A2C47);
+const Color kBorderDark = Color(0xFF1E334F);
+
 TextStyle ts({
   double size = 13,
   FontWeight w = FontWeight.normal,
@@ -91,30 +118,303 @@ TextStyle tsD({
   letterSpacing: -0.2,
 );
 
-ThemeData get _theme => ThemeData(
-  brightness: Brightness.dark,
+ThemeData _buildLightTheme() => ThemeData(
+  brightness: Brightness.light,
   primaryColor: C.primary,
   scaffoldBackgroundColor: C.bg,
-  colorScheme: const ColorScheme.dark(
+  colorScheme: const ColorScheme.light(
     primary: C.primary,
     secondary: C.accent,
     surface: C.card,
     error: C.err,
+    onPrimary: Colors.white,
+    onSurface: C.txt,
   ),
   fontFamily: 'Roboto',
   useMaterial3: true,
+  dividerColor: C.border,
   appBarTheme: const AppBarTheme(
-    backgroundColor: Colors.transparent,
+    backgroundColor: C.surface,
     elevation: 0,
+    scrolledUnderElevation: 0.5,
+    shadowColor: Color(0x0A000000),
     iconTheme: IconThemeData(color: C.txt),
     titleTextStyle: TextStyle(
       color: C.txt,
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 0.3,
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.2,
     ),
   ),
+  cardTheme: CardThemeData(
+    color: C.card,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: C.border, width: 1),
+    ),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: C.primary,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      foregroundColor: C.primary,
+      side: const BorderSide(color: C.border),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+  ),
+  snackBarTheme: SnackBarThemeData(
+    backgroundColor: C.txt,
+    contentTextStyle: const TextStyle(color: Colors.white),
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  ),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    backgroundColor: C.surface,
+    selectedItemColor: C.primary,
+    unselectedItemColor: C.txt2,
+    type: BottomNavigationBarType.fixed,
+    elevation: 0,
+  ),
 );
+
+ThemeData _buildDarkTheme() => ThemeData(
+  brightness: Brightness.dark,
+  primaryColor: C.primary,
+  scaffoldBackgroundColor: const Color(0xFF0B1220),
+  colorScheme: const ColorScheme.dark(
+    primary: C.pLight,
+    secondary: C.accent,
+    surface: Color(0xFF152238),
+    error: C.errLight,
+    onPrimary: Colors.white,
+    onSurface: Color(0xFFE8F0FE),
+  ),
+  fontFamily: 'Roboto',
+  useMaterial3: true,
+  dividerColor: const Color(0xFF1E334F),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Color(0xFF0F1A2C),
+    elevation: 0,
+    iconTheme: IconThemeData(color: Color(0xFFE8F0FE)),
+    titleTextStyle: TextStyle(
+      color: Color(0xFFE8F0FE),
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+  cardTheme: CardThemeData(
+    color: const Color(0xFF152238),
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: Color(0xFF1E334F), width: 1),
+    ),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: C.primary,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+  ),
+  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+    backgroundColor: Color(0xFF0F1A2C),
+    selectedItemColor: C.pLight,
+    unselectedItemColor: Color(0xFF90A4AE),
+    type: BottomNavigationBarType.fixed,
+    elevation: 0,
+  ),
+);
+
+// ══════════════════════════════════════════════════════════════════
+//  GOOGLE PLAY BILLING — GERÇEK PREMIUM SATIN ALMA
+//  Play Store politikalarına uygun tek yol: dijital içerik/özellik
+//  satışı resmi Play Billing Library üzerinden (in_app_purchase paketi)
+//  yapılmalıdır. Harici ödeme linki/başka bir ödeme sağlayıcısına
+//  yönlendirme veya "ücretsiz demo" adı altında gerçek parayla
+//  satılan bir özelliği bedelsiz açmak Play politika ihlalidir.
+//  Bu yüzden ürün, Play Console'da tanımlanan gerçek bir "in-app
+//  product" (kalıcı/non-consumable) olarak satılır.
+// ══════════════════════════════════════════════════════════════════
+class BillingIds {
+  BillingIds._();
+
+  /// Play Console → Monetize → Products → In-app products altında
+  /// BİREBİR AYNI ID ile tanımlanması gereken kalıcı (non-consumable)
+  /// premium ürünü. Burada değiştirirseniz Play Console'daki ürün
+  /// ID'sini de aynı şekilde güncelleyin.
+  static const String premiumLifetime = 'sinav365_premium_lifetime';
+
+  static const Set<String> productIds = {premiumLifetime};
+}
+
+class BillingManager {
+  BillingManager._();
+  static final BillingManager instance = BillingManager._();
+
+  final InAppPurchase _iap = InAppPurchase.instance;
+  StreamSubscription<List<PurchaseDetails>>? _sub;
+
+  bool available = false;
+  bool purchasePending = false;
+  bool storeQueried = false;
+  String? lastError;
+  ProductDetails? premiumProduct;
+
+  /// Satın alma / restore başarıyla doğrulandığında çağrılır.
+  void Function()? _onPremiumUnlocked;
+
+  /// UI'ın (Premium dialog) durum değişikliklerinden haberdar olması için.
+  final List<VoidCallback> _listeners = [];
+  void addListener(VoidCallback cb) => _listeners.add(cb);
+  void removeListener(VoidCallback cb) => _listeners.remove(cb);
+  void _notify() {
+    for (final cb in List<VoidCallback>.from(_listeners)) {
+      cb();
+    }
+  }
+
+  Future<void> init({required void Function() onPremiumUnlocked}) async {
+    _onPremiumUnlocked = onPremiumUnlocked;
+    try {
+      available = await _iap.isAvailable();
+    } catch (_) {
+      available = false;
+    }
+    if (!available) {
+      storeQueried = true;
+      _notify();
+      return;
+    }
+
+    _sub = _iap.purchaseStream.listen(
+      _onPurchaseUpdate,
+      onDone: () => _sub?.cancel(),
+      onError: (e) {
+        lastError = e.toString();
+        purchasePending = false;
+        _notify();
+      },
+    );
+
+    await _queryProducts();
+  }
+
+  Future<void> _queryProducts() async {
+    try {
+      final response = await _iap.queryProductDetails(BillingIds.productIds);
+      if (response.error == null && response.productDetails.isNotEmpty) {
+        premiumProduct = response.productDetails.firstWhere(
+          (p) => p.id == BillingIds.premiumLifetime,
+          orElse: () => response.productDetails.first,
+        );
+      } else if (response.notFoundIDs.isNotEmpty) {
+        // Play Console'da ürün henüz tanımlanmamış/yayınlanmamış olabilir.
+        lastError = 'product_not_found';
+      }
+    } catch (e) {
+      lastError = e.toString();
+    }
+    storeQueried = true;
+    _notify();
+  }
+
+  /// Ürün mağazadan henüz okunamadıysa tekrar dener.
+  Future<void> ensureProductLoaded() async {
+    if (premiumProduct == null && available) {
+      await _queryProducts();
+    }
+  }
+
+  Future<void> buyPremium() async {
+    if (!available) {
+      lastError = 'store_unavailable';
+      _notify();
+      return;
+    }
+    await ensureProductLoaded();
+    final product = premiumProduct;
+    if (product == null) {
+      lastError = 'product_not_found';
+      _notify();
+      return;
+    }
+    purchasePending = true;
+    lastError = null;
+    _notify();
+    final param = PurchaseParam(productDetails: product);
+    try {
+      // Kalıcı (bir kere satın alınan, tüketilmeyen) premium özellik.
+      await _iap.buyNonConsumable(purchaseParam: param);
+    } catch (e) {
+      purchasePending = false;
+      lastError = e.toString();
+      _notify();
+    }
+  }
+
+  /// Kullanıcı cihaz/hesap değiştirdiğinde ya da uygulamayı yeniden
+  /// yüklediğinde daha önce satın aldığı premium'u geri yükler.
+  /// Hem Play Store hem App Store politikaları restore akışı ister.
+  Future<void> restorePurchases() async {
+    if (!available) return;
+    lastError = null;
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      lastError = e.toString();
+      _notify();
+    }
+  }
+
+  void _onPurchaseUpdate(List<PurchaseDetails> purchases) async {
+    for (final purchase in purchases) {
+      switch (purchase.status) {
+        case PurchaseStatus.pending:
+          purchasePending = true;
+          break;
+        case PurchaseStatus.error:
+          purchasePending = false;
+          lastError = purchase.error?.message ?? 'purchase_error';
+          break;
+        case PurchaseStatus.canceled:
+          purchasePending = false;
+          break;
+        case PurchaseStatus.purchased:
+        case PurchaseStatus.restored:
+          purchasePending = false;
+          if (purchase.productID == BillingIds.premiumLifetime) {
+            // NOT: Üretimde burada, sunucu tarafında Play Developer API
+            // (purchases.products.get) ile satın almanın gerçekten geçerli
+            // ve daha önce iptal/iade edilmemiş olduğunu doğrulamanız
+            // önerilir. Yalnızca istemci tarafı doğrulama, sahte/oynanmış
+            // satın alma bildirimlerine karşı yeterli koruma sağlamaz.
+            _onPremiumUnlocked?.call();
+          }
+          break;
+      }
+      if (purchase.pendingCompletePurchase) {
+        await _iap.completePurchase(purchase);
+      }
+    }
+    _notify();
+  }
+
+  void dispose() {
+    _sub?.cancel();
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════
 //  ADMOB REKLAM ALT YAPISI
@@ -335,17 +635,83 @@ extension CatX on Cat {
   }[this]!;
 
   /// Ücretsiz kullanıcılar için kilitli kategoriler (Premium gerektirir).
-  bool get isPremiumOnly => this == Cat.ceza || this == Cat.cevresel;
+  /// Ücretsiz: trafik, ilkYardim, trafikAdabi, levhalar
+  /// Premium: ceza, cevresel, aracTeknik, motor (önemli teknik/hukuk)
+  bool get isPremiumOnly =>
+      this == Cat.ceza ||
+      this == Cat.cevresel ||
+      this == Cat.aracTeknik ||
+      this == Cat.motor;
 }
 
 // ══════════════════════════════════════════════════════════════════
 //  QUESTION MODEL
 // ══════════════════════════════════════════════════════════════════
+
+/// Soru görseli: assets yolundan yükler. Dosya yoksa hata mesajı gösterir.
+class QuestionImage extends StatelessWidget {
+  final String? path;
+  final double maxHeight;
+  const QuestionImage({super.key, required this.path, this.maxHeight = 260});
+
+  @override
+  Widget build(BuildContext context) {
+    if (path == null || path!.isEmpty) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          constraints: BoxConstraints(maxHeight: maxHeight, minHeight: 140),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A2332) : const Color(0xFFF1F5F9),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2A3A50) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Image.asset(
+            path!,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Container(
+              height: 140,
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.image_not_supported_outlined,
+                      color: isDark ? Colors.white38 : Colors.grey.shade400, size: 36),
+                  const SizedBox(height: 6),
+                  Text('Görsel yüklenemedi',
+                      style: TextStyle(
+                          color: isDark ? Colors.white54 : Colors.grey.shade500,
+                          fontSize: 12)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(path!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: isDark ? Colors.white30 : Colors.grey.shade400,
+                            fontSize: 10)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class Q {
   final String id, text, explanation;
   final List<String> opts;
   final int correct;
   final Cat cat;
+  /// Opsiyonel görsel yolu, örn. "assets/images/sorular/koma_pozisyonu.png"
+  final String? image;
   bool fav = false;
 
   Q({
@@ -355,6 +721,7 @@ class Q {
     required this.correct,
     required this.cat,
     required this.explanation,
+    this.image,
   });
 
   factory Q.fromJson(Map<String, dynamic> j) => Q(
@@ -366,7 +733,8 @@ class Q {
       (c) => c.name == j['cat'],
       orElse: () => Cat.trafik,
     ),
-    explanation: j['explanation'] as String,
+    explanation: j['explanation'] as String? ?? '',
+    image: j['image'] as String?,
   );
 }
 
@@ -405,37 +773,114 @@ class QB {
   }
 
   static List<Q> exam() {
-    // Real exam: 50 questions distributed across categories
+    // Resmi e-sınava yakın dağılım (~50 soru):
+    // Trafik+Levha+Ceza+Çevre ≈ 23, İlk Yardım 12, Motor+Teknik 9, Adab 6
     final result = <Q>[];
     final targets = {
-      Cat.trafik: 14,
-      Cat.ilkYardim: 8,
-      Cat.motor: 8,
-      Cat.trafikAdabi: 6,
+      Cat.trafik: 12,
       Cat.levhalar: 6,
-      Cat.aracTeknik: 5,
       Cat.ceza: 3,
-      Cat.cevresel: 3,
+      Cat.cevresel: 2,
+      Cat.ilkYardim: 12,
+      Cat.motor: 6,
+      Cat.aracTeknik: 3,
+      Cat.trafikAdabi: 6,
     };
     for (final cat in Cat.values) {
       final qs = byCat(cat)..shuffle(Random());
-      result.addAll(qs.take(targets[cat] ?? 2));
+      result.addAll(qs.take(targets[cat] ?? 0));
+    }
+    // Eksik kalırsa rastgele tamamla
+    if (result.length < 50) {
+      final used = result.map((q) => q.id).toSet();
+      final rest = all.where((q) => !used.contains(q.id)).toList()..shuffle(Random());
+      result.addAll(rest.take(50 - result.length));
     }
     result.shuffle(Random());
-    return result;
+    return result.take(50).toList();
+  }
+}
+
+/// Konu anlatımları assets/data/topics.json dosyasından yüklenir.
+class TopicsBank {
+  static List<TopicLesson> all = [];
+  static bool loaded = false;
+
+  static IconData _icon(String? name) {
+    switch (name) {
+      case 'favorite':
+        return Icons.favorite_rounded;
+      case 'pan_tool':
+        return Icons.pan_tool_rounded;
+      case 'settings':
+        return Icons.settings_rounded;
+      case 'people':
+        return Icons.people_rounded;
+      case 'emergency':
+        return Icons.emergency_rounded;
+      case 'alt_route':
+        return Icons.alt_route_rounded;
+      case 'bloodtype':
+        return Icons.bloodtype_rounded;
+      case 'speed':
+        return Icons.speed_rounded;
+      case 'eco':
+        return Icons.eco_rounded;
+      case 'social_distance':
+        return Icons.social_distance_rounded;
+      case 'traffic':
+        return Icons.traffic_rounded;
+      case 'local_parking':
+        return Icons.local_parking_rounded;
+      case 'gavel':
+        return Icons.gavel_rounded;
+      default:
+        return Icons.menu_book_rounded;
+    }
+  }
+
+  static Color _color(String? hex) {
+    if (hex == null || hex.isEmpty) return C.primary;
+    final h = hex.replaceAll('#', '');
+    if (h.length == 6) {
+      return Color(int.parse('FF$h', radix: 16));
+    }
+    return C.primary;
+  }
+
+  static Future<void> load() async {
+    try {
+      final raw = await rootBundle.loadString('assets/data/topics.json');
+      final List<dynamic> data = json.decode(raw) as List<dynamic>;
+      all = data.map((e) {
+        final m = e as Map<String, dynamic>;
+        return TopicLesson(
+          title: m['title'] as String? ?? '',
+          category: m['category'] as String? ?? '',
+          icon: _icon(m['icon'] as String?),
+          color: _color(m['color'] as String?),
+          points: List<String>.from(m['points'] as List? ?? const []),
+          tip: m['tip'] as String? ?? '',
+        );
+      }).toList(growable: false);
+      loaded = true;
+    } catch (_) {
+      all = [];
+      loaded = true;
+    }
   }
 }
 
 // ══════════════════════════════════════════════════════════════════
-//  STATE MANAGEMENT
+//  STATE MANAGEMENT — SharedPreferences ile kalıcı
 // ══════════════════════════════════════════════════════════════════
 class AppState extends ChangeNotifier {
   int navIdx = 0;
   int totalSolved = 0;
   int totalCorrect = 0;
-  int streak = 7;
-  int xp = 1250;
-  int level = 5;
+  int streak = 0;
+  int xp = 0;
+  int level = 1;
   bool isPremium = false;
   Set<String> favIds = {};
   Map<Cat, int> catScores = {};
@@ -450,10 +895,92 @@ class AppState extends ChangeNotifier {
 
   // ── Ayarlar (Settings) ──────────────────────────────────────
   bool notificationsEnabled = true;
-  bool darkMode = true;
+  bool darkMode = false; // Varsayılan açık tema
   String language = 'Türkçe';
 
+  bool _loaded = false;
+  bool get isLoaded => _loaded;
+
   double get rate => totalSolved == 0 ? 0 : totalCorrect / totalSolved;
+
+  /// Uygulama açılışında kalıcı verileri yükler.
+  Future<void> load() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      isPremium = p.getBool('isPremium') ?? false;
+      notificationsEnabled = p.getBool('notificationsEnabled') ?? true;
+      darkMode = p.getBool('darkMode') ?? false;
+      language = p.getString('language') ?? 'Türkçe';
+      totalSolved = p.getInt('totalSolved') ?? 0;
+      totalCorrect = p.getInt('totalCorrect') ?? 0;
+      streak = p.getInt('streak') ?? 0;
+      xp = p.getInt('xp') ?? 0;
+      level = p.getInt('level') ?? ((xp / 500).floor() + 1);
+      favIds = (p.getStringList('favIds') ?? const []).toSet();
+      wrongIds = (p.getStringList('wrongIds') ?? const []).toSet();
+      solvedToday = p.getInt('solvedToday') ?? 0;
+      final lastDayMs = p.getInt('lastSolveDay');
+      if (lastDayMs != null) {
+        _lastSolveDay = DateTime.fromMillisecondsSinceEpoch(lastDayMs);
+      }
+      // Kategori skorları
+      final catRaw = p.getString('catScores');
+      if (catRaw != null && catRaw.isNotEmpty) {
+        try {
+          final map = jsonDecode(catRaw) as Map<String, dynamic>;
+          catScores = {
+            for (final e in map.entries)
+              if (Cat.values.any((c) => c.name == e.key))
+                Cat.values.firstWhere((c) => c.name == e.key): (e.value as num).toInt(),
+          };
+        } catch (_) {}
+      }
+      // Sınav geçmişi (son 20)
+      final histRaw = p.getString('examHistory');
+      if (histRaw != null && histRaw.isNotEmpty) {
+        try {
+          final list = jsonDecode(histRaw) as List<dynamic>;
+          history = list
+              .map((j) => ExamResult.fromJson(j as Map<String, dynamic>))
+              .toList();
+        } catch (_) {}
+      }
+      AdManager.instance.setPremium(isPremium);
+    } catch (_) {
+      // Prefs okunamazsa varsayılanlarla devam
+    }
+    _loaded = true;
+    notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.setBool('isPremium', isPremium);
+      await p.setBool('notificationsEnabled', notificationsEnabled);
+      await p.setBool('darkMode', darkMode);
+      await p.setString('language', language);
+      await p.setInt('totalSolved', totalSolved);
+      await p.setInt('totalCorrect', totalCorrect);
+      await p.setInt('streak', streak);
+      await p.setInt('xp', xp);
+      await p.setInt('level', level);
+      await p.setStringList('favIds', favIds.toList());
+      await p.setStringList('wrongIds', wrongIds.toList());
+      await p.setInt('solvedToday', solvedToday);
+      if (_lastSolveDay != null) {
+        await p.setInt('lastSolveDay', _lastSolveDay!.millisecondsSinceEpoch);
+      }
+      await p.setString(
+        'catScores',
+        jsonEncode({for (final e in catScores.entries) e.key.name: e.value}),
+      );
+      await p.setString(
+        'examHistory',
+        jsonEncode(history.take(20).map((r) => r.toJson()).toList()),
+      );
+    } catch (_) {}
+  }
 
   void setNav(int i) {
     navIdx = i;
@@ -476,6 +1003,7 @@ class AppState extends ChangeNotifier {
     }
     level = (xp / 500).floor() + 1;
     notifyListeners();
+    _persist();
   }
 
   void _bumpDailyCounter() {
@@ -494,41 +1022,51 @@ class AppState extends ChangeNotifier {
   void markCorrectedOut(String id) {
     wrongIds.remove(id);
     notifyListeners();
+    _persist();
   }
 
   void clearWrongs() {
     wrongIds.clear();
     notifyListeners();
+    _persist();
   }
 
   void toggleFav(String id) {
     favIds.contains(id) ? favIds.remove(id) : favIds.add(id);
     notifyListeners();
+    _persist();
   }
 
   void addResult(ExamResult r) {
     history.insert(0, r);
+    if (history.length > 20) history = history.take(20).toList();
     notifyListeners();
+    _persist();
   }
 
   void unlockPremium() {
     isPremium = true;
+    AdManager.instance.setPremium(true);
     notifyListeners();
+    _persist();
   }
 
   void setNotifications(bool v) {
     notificationsEnabled = v;
     notifyListeners();
+    _persist();
   }
 
   void setDarkMode(bool v) {
     darkMode = v;
     notifyListeners();
+    _persist();
   }
 
   void setLanguage(String v) {
     language = v;
     notifyListeners();
+    _persist();
   }
 
   /// Ödüllü reklam izlendiğinde bonus XP eklemek için kullanılır.
@@ -536,6 +1074,7 @@ class AppState extends ChangeNotifier {
     xp += amount;
     level = (xp / 500).floor() + 1;
     notifyListeners();
+    _persist();
   }
 }
 
@@ -553,7 +1092,32 @@ class ExamResult {
     required this.score,
     required this.passed,
     required this.dur,
-  }) : date = DateTime.now();
+    DateTime? date,
+  }) : date = date ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {
+        'correct': correct,
+        'wrong': wrong,
+        'empty': empty,
+        'total': total,
+        'score': score,
+        'passed': passed,
+        'date': date.millisecondsSinceEpoch,
+        'durMs': dur.inMilliseconds,
+      };
+
+  factory ExamResult.fromJson(Map<String, dynamic> j) => ExamResult(
+        correct: (j['correct'] as num?)?.toInt() ?? 0,
+        wrong: (j['wrong'] as num?)?.toInt() ?? 0,
+        empty: (j['empty'] as num?)?.toInt() ?? 0,
+        total: (j['total'] as num?)?.toInt() ?? 0,
+        score: (j['score'] as num?)?.toDouble() ?? 0,
+        passed: j['passed'] as bool? ?? false,
+        dur: Duration(milliseconds: (j['durMs'] as num?)?.toInt() ?? 0),
+        date: j['date'] != null
+            ? DateTime.fromMillisecondsSinceEpoch((j['date'] as num).toInt())
+            : DateTime.now(),
+      );
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -567,13 +1131,32 @@ class SurvoxApp extends StatefulWidget {
 
 class _SurvoxAppState extends State<SurvoxApp> {
   final _state = AppState();
+
+  @override
+  void initState() {
+    super.initState();
+    // Premium, XP, ayarlar vb. cihazdan yüklenir — uygulama kapanınca kaybolmaz.
+    _state.load();
+    // Gerçek Play Billing bağlantısı: satın alma/restore onaylanınca
+    // premium'u kalıcı olarak açar (shared_preferences'a yazar).
+    BillingManager.instance.init(onPremiumUnlocked: _state.unlockPremium);
+  }
+
+  @override
+  void dispose() {
+    BillingManager.instance.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _state,
     builder: (_, __) => MaterialApp(
       title: 'Sınav365 Ehliyet',
       debugShowCheckedModeBanner: false,
-      theme: _theme,
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      themeMode: _state.darkMode ? ThemeMode.dark : ThemeMode.light,
       home: SplashScreen(s: _state),
     ),
   );
@@ -620,18 +1203,37 @@ class _SplashState extends State<SplashScreen>
       ),
     );
     _ac.forward();
-    Future.delayed(const Duration(seconds: 3), () {
+    _waitAndNavigate();
+  }
+
+  /// Splash en az 3 saniye gösterilir, ANCAK kayıtlı durum (Premium,
+  /// XP, favoriler vb.) diskten tam olarak yüklenmeden ana ekrana
+  /// geçilmez. Böylece — özellikle yavaş cihazlarda — Premium durumu
+  /// henüz okunmadan MainShell'in "ücretsiz" varsayımla açılıp
+  /// kullanıcıya yanlışlıkla kilit ekranı göstermesi engellenir.
+  Future<void> _waitAndNavigate() async {
+    final minDelay = Future.delayed(const Duration(seconds: 3));
+    final stateReady = _awaitLoaded();
+    await Future.wait([minDelay, stateReady]);
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => MainShell(s: widget.s),
+        transitionDuration: const Duration(milliseconds: 800),
+        transitionsBuilder: (_, a, __, child) =>
+            FadeTransition(opacity: a, child: child),
+      ),
+    );
+  }
+
+  /// [AppState.load] tamamlanana kadar bekler (zaten tamamlanmışsa hemen döner).
+  Future<void> _awaitLoaded() async {
+    if (widget.s.isLoaded) return;
+    while (!widget.s.isLoaded) {
+      await Future.delayed(const Duration(milliseconds: 30));
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => MainShell(s: widget.s),
-          transitionDuration: const Duration(milliseconds: 800),
-          transitionsBuilder: (_, a, __, child) =>
-              FadeTransition(opacity: a, child: child),
-        ),
-      );
-    });
+    }
   }
 
   @override
@@ -716,7 +1318,7 @@ class _SplashState extends State<SplashScreen>
                         const SizedBox(height: 12),
                         const Text(
                           'Yükleniyor...',
-                          style: TextStyle(color: C.txt2, fontSize: 12),
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
                     ),
@@ -787,13 +1389,13 @@ class _NavBar extends StatelessWidget {
         color: C.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.5),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+            color: Colors.black.withOpacity(.06),
+            blurRadius: 16,
+            offset: const Offset(0, -2),
           ),
         ],
         border: const Border(
-          top: BorderSide(color: Color(0xFF1A3357), width: 1),
+          top: BorderSide(color: C.border, width: 1),
         ),
       ),
       child: BottomNavigationBar(
@@ -802,10 +1404,11 @@ class _NavBar extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: C.pLight,
+        selectedItemColor: C.primary,
         unselectedItemColor: C.txt2,
         selectedFontSize: 11,
         unselectedFontSize: 11,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
         items: items,
       ),
     );
@@ -898,6 +1501,10 @@ class HomeScreen extends StatelessWidget {
                 _QuickActions(s: s),
                 const SizedBox(height: 16),
                 _RewardedXpCard(s: s),
+                const SizedBox(height: 20),
+                _sec('Özel Çalışma'),
+                const SizedBox(height: 12),
+                _SpecialLearningRow(s: s),
                 const SizedBox(height: 20),
                 _sec('Konu Kategorileri'),
                 const SizedBox(height: 12),
@@ -1037,21 +1644,35 @@ class _SC extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
       decoration: BoxDecoration(
         color: C.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: c.withOpacity(.25)),
+        border: Border.all(color: C.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(i, color: c, size: 22),
-          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: c.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(i, color: c, size: 20),
+          ),
+          const SizedBox(height: 8),
           Text(
             v,
             style: TextStyle(
-              color: c,
-              fontWeight: FontWeight.w900,
+              color: C.txt,
+              fontWeight: FontWeight.w800,
               fontSize: 18,
             ),
           ),
@@ -1842,7 +2463,7 @@ class _TestScreenState extends State<TestScreen>
                       decoration: BoxDecoration(
                         color: C.card,
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: C.cardHi),
+                        border: Border.all(color: C.border),
                       ),
                       child: Text(
                         cur.text,
@@ -1854,7 +2475,9 @@ class _TestScreenState extends State<TestScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
+                    QuestionImage(path: cur.image),
+                    const SizedBox(height: 8),
                     ...List.generate(cur.opts.length, (i) {
                       final letter = String.fromCharCode(65 + i);
                       return Padding(
@@ -1981,7 +2604,10 @@ class _TestScreenState extends State<TestScreen>
                 onPressed: _answered ? _next : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _answered ? C.primary : C.cardHi,
-                  foregroundColor: Colors.white,
+                  // Pasifken açık zeminde beyaz yazı görünmüyordu
+                  foregroundColor: _answered ? Colors.white : C.txt2,
+                  disabledForegroundColor: C.txt2,
+                  disabledBackgroundColor: C.cardHi,
                   padding: const EdgeInsets.symmetric(vertical: 17),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
@@ -2028,7 +2654,7 @@ class _ResultSheet extends StatelessWidget {
             width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white24,
+              color: C.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -2575,8 +3201,11 @@ class _RealExamState extends State<RealExamScreen> {
                     child: Center(
                       child: Text(
                         '${i + 1}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          // Açık temada cevaplanmamış (C.cardHi) kutularda beyaz yazı kayboluyordu
+                          color: (i == _idx || _ans.containsKey(i))
+                              ? Colors.white
+                              : C.txt,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         ),
@@ -2610,7 +3239,9 @@ class _RealExamState extends State<RealExamScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
+                  QuestionImage(path: q.image, maxHeight: 200),
+                  const SizedBox(height: 8),
                   ...List.generate(q.opts.length, (i) {
                     final sel = _ans[_idx] == i;
                     final letter = String.fromCharCode(65 + i);
@@ -2677,8 +3308,8 @@ class _RealExamState extends State<RealExamScreen> {
                   OutlinedButton(
                     onPressed: () => setState(() => _idx--),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: C.txt2,
-                      side: const BorderSide(color: C.cardHi),
+                      foregroundColor: C.txt,
+                      side: const BorderSide(color: C.border),
                       padding: const EdgeInsets.symmetric(
                         vertical: 14,
                         horizontal: 20,
@@ -3084,18 +3715,18 @@ class ProfileScreen extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const Text('  •  ', style: TextStyle(color: C.txt2)),
+                          const Text('  •  ', style: TextStyle(color: Colors.white60)),
                           Text(
                             '${s.xp} XP',
                             style: const TextStyle(
-                              color: C.pLight,
+                              color: C.aLight,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           if (s.isPremium) ...[
                             const Text(
                               '  •  ',
-                              style: TextStyle(color: C.txt2),
+                              style: TextStyle(color: Colors.white60),
                             ),
                             const Text(
                               '👑 Premium',
@@ -3375,21 +4006,19 @@ class _Settings extends StatelessWidget {
             context,
             Icons.dark_mode_rounded,
             'Karanlık Mod',
-            s.darkMode ? 'Aktif' : 'Kapalı (yakında açık tema)',
+            s.darkMode ? 'Aktif' : 'Kapalı — Açık tema',
             C.purple,
             s.darkMode,
             (v) {
               s.setDarkMode(v);
-              if (!v) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Açık tema şu an geliştiriliyor, tercihiniz kaydedildi.',
-                    ),
-                    duration: Duration(seconds: 2),
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    v ? 'Karanlık tema açıldı' : 'Açık tema açıldı',
                   ),
-                );
-              }
+                  duration: const Duration(seconds: 1),
+                ),
+              );
             },
           ),
           _div(),
@@ -3462,7 +4091,7 @@ class _Settings extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              s.isPremium ? 'Tüm özellikler açık' : 'Reklamsız + tüm sorular',
+              s.isPremium ? 'Tüm özellikler açık' : 'Reklamsız + motor/ceza/görseller',
               style: const TextStyle(color: C.txt2, fontSize: 12),
             ),
             trailing: s.isPremium
@@ -3496,22 +4125,6 @@ class _Settings extends StatelessWidget {
                     );
                   },
           ),
-          if (s.isPremium) ...[
-            _div(),
-            _tile(
-              Icons.restart_alt_rounded,
-              'Premium\'u Kapat (Test)',
-              'Premium özellikleri devre dışı bırak',
-              C.errLight,
-              () {
-                s.isPremium = false;
-                s.notifyListeners();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Premium kapatıldı.')),
-                );
-              },
-            ),
-          ],
         ],
       ),
     );
@@ -3624,15 +4237,84 @@ class _Settings extends StatelessWidget {
         onTap: tap,
       );
   Widget _div() =>
-      const Divider(color: Color(0xFF1A3357), height: 0, indent: 56);
+      const Divider(color: C.border, height: 0, indent: 56);
 }
 
-class _PremiumDialog extends StatelessWidget {
+/// Gerçek Google Play Billing akışına bağlı Premium satın alma diyaloğu.
+/// "Ücretsiz demo" ile anında açma KALDIRILDI — bu, gerçek parayla
+/// satılan bir özelliği bedelsiz vermek anlamına geldiği için Play
+/// Store politikalarına aykırıdır. Artık buton doğrudan
+/// [BillingManager.buyPremium] üzerinden resmi satın alma akışını
+/// başlatır; premium yalnızca Play'den onaylanmış bir satın alma /
+/// restore sonrası [AppState.unlockPremium] ile açılır.
+class _PremiumDialog extends StatefulWidget {
   final AppState s;
   const _PremiumDialog({required this.s});
   @override
-  Widget build(BuildContext context) => Dialog(
-    backgroundColor: C.card,
+  State<_PremiumDialog> createState() => _PremiumDialogState();
+}
+
+class _PremiumDialogState extends State<_PremiumDialog> {
+  final BillingManager _billing = BillingManager.instance;
+  bool _wasPending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _billing.addListener(_onBillingChanged);
+    _billing.ensureProductLoaded();
+  }
+
+  @override
+  void dispose() {
+    _billing.removeListener(_onBillingChanged);
+    super.dispose();
+  }
+
+  void _onBillingChanged() {
+    if (!mounted) return;
+    // Satın alma "pending" durumundan çıkıp premium açıldıysa dialog'u
+    // kapatıp kullanıcıyı bilgilendir.
+    if (_wasPending && !_billing.purchasePending && widget.s.isPremium) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🎉 Premium aktif edildi!')),
+      );
+      return;
+    }
+    _wasPending = _billing.purchasePending;
+    setState(() {});
+  }
+
+  String get _priceLabel {
+    final product = _billing.premiumProduct;
+    if (product != null) return product.price;
+    if (!_billing.storeQueried) return '…';
+    return 'Fiyat için mağazaya bağlanılamadı';
+  }
+
+  String? get _errorLabel {
+    switch (_billing.lastError) {
+      case null:
+        return null;
+      case 'store_unavailable':
+        return 'Mağazaya şu anda ulaşılamıyor. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.';
+      case 'product_not_found':
+        return 'Premium ürünü mağazada bulunamadı. Lütfen daha sonra tekrar deneyin.';
+      default:
+        return 'Satın alma tamamlanamadı. Lütfen tekrar deneyin.';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final err = _errorLabel;
+    final canBuy = _billing.available &&
+        !_billing.purchasePending &&
+        _billing.premiumProduct != null;
+    return Dialog(
+    backgroundColor: isDark ? const Color(0xFF152238) : C.card,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     child: Padding(
       padding: const EdgeInsets.all(28),
@@ -3649,56 +4331,110 @@ class _PremiumDialog extends StatelessWidget {
               fontSize: 22,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            _priceLabel,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : C.txt2,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
           const SizedBox(height: 16),
           ...[
             '✅ Reklamsız deneyim',
-            '✅ Tüm kategoriler (Cezalar, Çevre dahil)',
-            '✅ Süper Zor Mod ve detaylı istatistikler',
-            '✅ Çevrimdışı mod',
-            '✅ Sınırsız deneme sınavı',
+            '✅ Tüm kategoriler (Ceza, Çevre, Motor, Teknik)',
+            '✅ Tüm görselli sorular',
+            '✅ Süper Zor Mod + sınırsız deneme',
+            '✅ Detaylı istatistik ve yanlış analizi',
           ].map(
             (f) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 f,
-                style: const TextStyle(color: C.txt, fontSize: 14),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFE8F0FE)
+                      : C.txt,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
+          if (err != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              err,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12.5),
+            ),
+          ],
+          if (!_billing.available && _billing.storeQueried) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Satın alma bu cihazda/ortamda kullanılamıyor (mağaza bağlantısı yok).',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? Colors.white54 : C.txt2,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                s.unlockPremium();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('🎉 Premium aktif edildi!')),
-                );
-              },
+              onPressed: canBuy ? () => _billing.buyPremium() : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: C.gold,
                 foregroundColor: Colors.black,
+                disabledBackgroundColor: C.gold.withOpacity(.4),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'HEMEN AL – ÜCRETSİZ DEMO',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
+              child: _billing.purchasePending
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: Colors.black,
+                      ),
+                    )
+                  : Text(
+                      _billing.premiumProduct != null
+                          ? 'PREMIUM\'A GEÇ · ${_billing.premiumProduct!.price}'
+                          : 'PREMIUM\'A GEÇ',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
             ),
           ),
           const SizedBox(height: 8),
           TextButton(
+            onPressed: _billing.available && !_billing.purchasePending
+                ? () => _billing.restorePurchases()
+                : null,
+            child: Text(
+              'Satın Almaları Geri Yükle',
+              style: TextStyle(
+                color: isDark ? Colors.white70 : C.txt2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Belki Sonra', style: TextStyle(color: C.txt2)),
+            child: Text('Belki Sonra', style: TextStyle(
+              color: isDark ? Colors.white54 : C.txt2,
+            )),
           ),
         ],
       ),
     ),
   );
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -3911,7 +4647,7 @@ class OptionTile extends StatelessWidget {
       case OptionState.selected:
         return kPrimary.withOpacity(.18);
       case OptionState.idle:
-        return isDark ? kCard : Colors.white;
+        return isDark ? kCardDark : Colors.white;
     }
   }
 
@@ -3924,7 +4660,7 @@ class OptionTile extends StatelessWidget {
       case OptionState.selected:
         return kPrimary;
       case OptionState.idle:
-        return isDark ? kBorder : const Color(0xFFE4E6EC);
+        return isDark ? kBorderDark : const Color(0xFFE4E6EC);
     }
   }
 
@@ -4169,7 +4905,7 @@ class TrafficSignBank {
       name: 'Dönel Kavşak',
       meaning: 'İleride bir göbekli (dönel) kavşak bulunduğunu bildirir.',
       whereUsed: 'Dönel kavşak girişlerinden önce.',
-      shape: SignShape.triangle, icon: Icons.roundabout_left_rounded,
+      shape: SignShape.triangle, icon: Icons.sync_rounded,
     ),
     TrafficSign(
       id: 'th_014', code: 'TU-14', category: catSignTehlike,
@@ -4420,7 +5156,7 @@ class TrafficSignBank {
       name: 'U Dönüşü Yapılmaz',
       meaning: 'Bu bölgede U dönüşü yapılmasının yasak olduğunu belirtir.',
       whereUsed: 'Bölünmüş yollar ve U dönüşünün tehlikeli olduğu kesimlerde.',
-      shape: SignShape.circleRed, icon: Icons.u_turn_left_rounded,
+      shape: SignShape.circleRed, icon: Icons.undo_rounded,
     ),
     TrafficSign(
       id: 'ya_009', code: 'TT-29a', category: catSignYasak,
@@ -4556,7 +5292,7 @@ class TrafficSignBank {
       name: 'Ada Etrafında Dönünüz',
       meaning: 'Sürücünün ada etrafında belirtilen yönde dönmesi gerektiğini belirtir.',
       whereUsed: 'Dönel kavşak (göbekli kavşak) girişlerinde.',
-      shape: SignShape.circleBlue, icon: Icons.roundabout_left_rounded,
+      shape: SignShape.circleBlue, icon: Icons.sync_rounded,
     ),
     TrafficSign(
       id: 'me_008', code: 'MY-8', category: catSignMecburi,
@@ -5065,28 +5801,30 @@ class _OctagonClipper extends CustomClipper<Path> {
 class TrafficSignBadge extends StatelessWidget {
   final TrafficSign sign;
   final double size;
-  const TrafficSignBadge({super.key, required this.sign, this.size = 84});
+  const TrafficSignBadge({super.key, required this.sign, this.size = 96});
 
   @override
   Widget build(BuildContext context) {
+    // Beyaz zeminli levhaların beyaz kartlarda kaybolmasını önlemek için
+    // tüm şekillerde belirgin gölge + hafif dış plaka kullanılır.
     switch (sign.shape) {
       case SignShape.triangle:
         return _shaped(
           clipper: const _TriangleClipper(),
-          fill: Colors.white,
-          border: kDanger,
+          fill: const Color(0xFFFFFBF5), // sıcak beyaz – saf beyaza göre daha görünür
+          border: const Color(0xFFE53935),
           iconColor: const Color(0xFF1A1A1A),
-          innerScale: 0.82,
-          contentShift: size * 0.06, // üçgende görsel ağırlık merkezini aşağı kaydır
+          innerScale: 0.76,
+          contentShift: size * 0.07,
         );
       case SignShape.invertedTriangle:
         return _shaped(
           clipper: const _InvertedTriangleClipper(),
-          fill: Colors.white,
-          border: kDanger,
+          fill: const Color(0xFFFFFBF5),
+          border: const Color(0xFFE53935),
           iconColor: const Color(0xFF1A1A1A),
-          innerScale: 0.82,
-          contentShift: -size * 0.06,
+          innerScale: 0.76,
+          contentShift: -size * 0.07,
         );
       case SignShape.diamondYellow:
         return _shaped(
@@ -5094,47 +5832,46 @@ class TrafficSignBadge extends StatelessWidget {
           fill: const Color(0xFFF5B942),
           border: const Color(0xFF1A1A1A),
           iconColor: const Color(0xFF1A1A1A),
-          innerScale: 0.86,
+          innerScale: 0.78,
         );
       case SignShape.octagon:
         return _shaped(
           clipper: const _OctagonClipper(),
-          fill: kDanger,
+          fill: const Color(0xFFE53935),
           border: Colors.white,
           iconColor: Colors.white,
-          innerScale: 0.90,
+          innerScale: 0.88,
         );
       case SignShape.circleRed:
         return _circleOrSquare(
           isCircle: true,
-          fill: Colors.white,
-          border: kDanger,
+          fill: const Color(0xFFFFFBF5),
+          border: const Color(0xFFE53935),
           iconColor: const Color(0xFF1A1A1A),
-          borderWidth: size * 0.10,
+          borderWidth: size * 0.11,
         );
       case SignShape.circleBlue:
         return _circleOrSquare(
           isCircle: true,
-          fill: kNavyAccent,
+          fill: const Color(0xFF1565C0),
           border: Colors.white,
           iconColor: Colors.white,
-          borderWidth: size * 0.03,
+          borderWidth: size * 0.04,
         );
       case SignShape.squareBlue:
         return _circleOrSquare(
           isCircle: false,
-          fill: kNavyAccent,
+          fill: const Color(0xFF1565C0),
           border: Colors.white,
           iconColor: Colors.white,
-          borderWidth: size * 0.03,
+          borderWidth: size * 0.04,
         );
     }
   }
 
-  /// Üçgen / ters üçgen / eşkenar dörtgen / sekizgen gibi özel şekiller
-  /// için: dış şekil kenarlık rengiyle, iç şekil ise TAM ORTADAN
-  /// (Transform.scale ile) küçültülerek dolgu rengiyle çizilir. Böylece
-  /// çerçeve kalınlığı her kenarda eşittir ve şekil bozulmaz.
+  /// Üçgen / ters üçgen / eşkenar dörtgen / sekizgen.
+  /// Dış şekil = kenarlık, iç şekil Transform.scale ile ortadan küçültülür.
+  /// Ek olarak gölge + hafif dış halka ile beyaz zemin üzerinde net görünür.
   Widget _shaped({
     required CustomClipper<Path> clipper,
     required Color fill,
@@ -5148,13 +5885,27 @@ class TrafficSignBadge extends StatelessWidget {
       height: size,
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
-          // Dış şekil = kenarlık rengi (tüm alanı kaplar)
+          // Soft drop shadow (dikdörtgen gölge + şekil içinde karartma)
+          Positioned.fill(
+            child: Transform.translate(
+              offset: Offset(0, size * 0.045),
+              child: Opacity(
+                opacity: 0.22,
+                child: ClipPath(
+                  clipper: clipper,
+                  child: Container(color: Colors.black),
+                ),
+              ),
+            ),
+          ),
+          // Dış şekil = kenarlık rengi
           ClipPath(
             clipper: clipper,
             child: Container(color: border),
           ),
-          // İç şekil = merkezden ölçeklenmiş dolgu rengi -> eşit çerçeve
+          // İç dolgu – eşit kalınlıkta çerçeve
           Transform.scale(
             scale: innerScale,
             child: ClipPath(
@@ -5166,7 +5917,7 @@ class TrafficSignBadge extends StatelessWidget {
               ),
             ),
           ),
-          // İkon / metin, şeklin görsel ağırlık merkezine göre hafifçe kaydırılır
+          // İçerik
           Transform.translate(
             offset: Offset(0, contentShift),
             child: _content(iconColor),
@@ -5183,27 +5934,112 @@ class TrafficSignBadge extends StatelessWidget {
     required Color iconColor,
     required double borderWidth,
   }) {
+    // Yasak (kırmızı daire) levhalarında çapraz çizgi: gerçek Türk levhalarına yakın.
+    // Hız limiti / overlay metinli ve "giriş yok" (yatay çubuk) hariç.
+    final needsSlash = isCircle &&
+        border.value == const Color(0xFFE53935).value &&
+        sign.overlayText == null &&
+        sign.icon != Icons.remove_rounded;
+
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: fill,
         shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: isCircle ? null : BorderRadius.circular(size * 0.14),
+        borderRadius: isCircle ? null : BorderRadius.circular(size * 0.12),
         border: Border.all(color: border, width: borderWidth),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.22),
+            blurRadius: size * 0.14,
+            offset: Offset(0, size * 0.05),
+            spreadRadius: -1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: size * 0.05,
+            offset: Offset(0, size * 0.02),
+          ),
+        ],
       ),
-      alignment: Alignment.center,
-      child: _content(iconColor),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          _content(iconColor),
+          if (needsSlash)
+            CustomPaint(
+              size: Size(size, size),
+              painter: _ProhibitionSlashPainter(
+                color: const Color(0xFFE53935),
+                strokeWidth: size * 0.09,
+                inset: borderWidth * 0.35,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _content(Color iconColor) {
     if (sign.overlayText != null) {
-      return Text(sign.overlayText!,
-          style: tsD(size: size * 0.30, w: FontWeight.w800, color: iconColor));
+      final text = sign.overlayText!;
+      final isLong = text.length > 2;
+      // Metin her temada net görünsün: hafif gölge + yüksek kontrast
+      return Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: size * (isLong ? 0.24 : 0.38),
+          fontWeight: FontWeight.w900,
+          color: iconColor,
+          letterSpacing: isLong ? -0.6 : -0.4,
+          height: 1.0,
+          shadows: [
+            Shadow(
+              color: iconColor.computeLuminance() > 0.5
+                  ? Colors.black.withOpacity(0.35)
+                  : Colors.white.withOpacity(0.25),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+      );
     }
     return Icon(sign.icon, size: size * 0.42, color: iconColor);
   }
+}
+
+/// Yasak levhası çapraz kırmızı çizgi (sol üst → sağ alt).
+class _ProhibitionSlashPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double inset;
+  const _ProhibitionSlashPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.inset,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final pad = inset + strokeWidth * 0.4;
+    canvas.drawLine(
+      Offset(pad, pad),
+      Offset(size.width - pad, size.height - pad),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProhibitionSlashPainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth || old.inset != inset;
 }
 
 // ------------------------------------------------------------
@@ -5221,11 +6057,11 @@ class _SignCategoryListScreenState extends State<SignCategoryListScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
       appBar: AppBar(
-        title: Text('Trafik Levhaları', style: ts(size: 16, w: FontWeight.w700, color: Colors.white)),
-        backgroundColor: kCardElevated,
-        foregroundColor: Colors.white,
+        title: Text('Trafik Levhaları', style: ts(size: 16, w: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         actions: [
           IconButton(
@@ -5253,9 +6089,9 @@ class _SignCategoryListScreenState extends State<SignCategoryListScreen> {
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: isDark ? kCard : Colors.white,
+                color: isDark ? kCardDark : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+                border: Border.all(color: isDark ? kBorderDark : const Color(0xFFE4E6EC)),
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -5307,12 +6143,12 @@ class _SignListScreenState extends State<SignListScreen> {
     final known = SignProgressStore.loadKnownIds();
 
     return Scaffold(
-      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
       appBar: AppBar(
         title: Text(kSignCategoryTitles[widget.category] ?? widget.category,
-            style: ts(size: 16, w: FontWeight.w700, color: Colors.white)),
-        backgroundColor: kCardElevated,
-        foregroundColor: Colors.white,
+            style: ts(size: 16, w: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
       bottomNavigationBar: const BannerAdWidget(),
@@ -5334,12 +6170,29 @@ class _SignListScreenState extends State<SignListScreen> {
             Expanded(
               child: TextField(
                 onChanged: (v) => setState(() => _query = v),
-                style: ts(size: 13.5, color: isDark ? Colors.white : Colors.black87),
+                style: ts(size: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                cursorColor: C.primary,
                 decoration: InputDecoration(
                   hintText: 'Levha ara…',
-                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  hintStyle: ts(size: 13.5, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20,
+                      color: isDark ? Colors.white54 : const Color(0xFF64748B)),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  filled: true,
+                  fillColor: isDark ? kCardDark : Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? kBorderDark : const Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? kBorderDark : const Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: C.primary, width: 1.5),
+                  ),
                 ),
               ),
             ),
@@ -5353,12 +6206,13 @@ class _SignListScreenState extends State<SignListScreen> {
                           title: kSignCategoryTitles[widget.category] ?? '',
                         ),
                       )),
-              icon: const Icon(Icons.style_rounded, size: 16),
-              label: Text('Kart', style: ts(size: 12.5, w: FontWeight.w700)),
+              icon: Icon(Icons.style_rounded, size: 16, color: isDark ? Colors.white70 : C.txt),
+              label: Text('Kart', style: ts(size: 12.5, w: FontWeight.w700, color: isDark ? Colors.white : C.txt)),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                side: BorderSide(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+                side: BorderSide(color: isDark ? kBorderDark : const Color(0xFFE4E6EC)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                foregroundColor: isDark ? Colors.white : C.txt,
               ),
             ),
           ]),
@@ -5382,20 +6236,53 @@ class _SignListScreenState extends State<SignListScreen> {
                           .push(MaterialPageRoute(builder: (_) => SignDetailScreen(sign: s)))
                           .then((_) => setState(() {})),
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
                         decoration: BoxDecoration(
-                          color: isDark ? kCard : Colors.white,
+                          color: isDark ? kCardDark : Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+                          border: Border.all(color: isDark ? kBorderDark : const Color(0xFFE4E6EC)),
+                          boxShadow: isDark
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                         ),
                         child: Column(children: [
-                          Expanded(child: Center(child: TrafficSignBadge(sign: s, size: 64))),
-                          const SizedBox(height: 8),
-                          Text(s.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-                              style: ts(size: 11.5, w: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
-                          const SizedBox(height: 4),
-                          Icon(isKnown ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                              size: 15, color: isKnown ? kSuccess : (isDark ? Colors.white24 : Colors.black26)),
+                          Expanded(
+                            child: Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 4),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.06)
+                                    : const Color(0xFFF3F5F9),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(child: TrafficSignBadge(sign: s, size: 78)),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(s.name,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: ts(
+                                  size: 11.5,
+                                  w: FontWeight.w700,
+                                  color: isDark ? Colors.white : Colors.black87)),
+                          const SizedBox(height: 3),
+                          Icon(
+                              isKnown
+                                  ? Icons.check_circle_rounded
+                                  : Icons.radio_button_unchecked_rounded,
+                              size: 15,
+                              color: isKnown
+                                  ? kSuccess
+                                  : (isDark ? Colors.white24 : Colors.black26)),
                         ]),
                       ),
                     );
@@ -5434,23 +6321,49 @@ class _SignDetailScreenState extends State<SignDetailScreen> {
     final color = kSignCategoryColors[s.category] ?? kPrimary;
 
     return Scaffold(
-      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
       appBar: AppBar(
-        title: Text(s.code, style: ts(size: 15, w: FontWeight.w700, color: Colors.white)),
-        backgroundColor: kCardElevated,
-        foregroundColor: Colors.white,
+        title: Text(s.code, style: ts(size: 15, w: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
       bottomNavigationBar: const BannerAdWidget(),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Center(child: TrafficSignBadge(sign: s, size: 140)),
-          const SizedBox(height: 18),
           Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: color.withOpacity(.14), borderRadius: BorderRadius.circular(8)),
+              width: 180,
+              height: 180,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.07) : const Color(0xFFF3F5F9),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : const Color(0xFFE2E6EE),
+                ),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+              ),
+              child: Center(child: TrafficSignBadge(sign: s, size: 140)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: color.withOpacity(.14),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Text(kSignCategoryTitles[s.category] ?? s.category,
                   style: ts(size: 11.5, w: FontWeight.w700, color: color)),
             ),
@@ -5486,9 +6399,9 @@ class _SignDetailScreenState extends State<SignDetailScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? kCard : Colors.white,
+          color: isDark ? kCardDark : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+          border: Border.all(color: isDark ? kBorderDark : const Color(0xFFE4E6EC)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -5542,11 +6455,11 @@ class _SignFlashcardScreenState extends State<SignFlashcardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
       appBar: AppBar(
-        title: Text(widget.title, style: ts(size: 15, w: FontWeight.w700, color: Colors.white)),
-        backgroundColor: kCardElevated,
-        foregroundColor: Colors.white,
+        title: Text(widget.title, style: ts(size: 15, w: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
       bottomNavigationBar: const BannerAdWidget(),
@@ -5585,7 +6498,7 @@ class _SignFlashcardScreenState extends State<SignFlashcardScreen> {
         LinearProgressIndicator(
           value: _index / widget.signs.length,
           minHeight: 5,
-          backgroundColor: isDark ? kCardElevated : const Color(0xFFE8EAED),
+          backgroundColor: isDark ? kCardElevatedDark : const Color(0xFFE8EAED),
           valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
         ),
         const SizedBox(height: 6),
@@ -5635,43 +6548,73 @@ class _SignFlashcardScreenState extends State<SignFlashcardScreen> {
 
   Widget _frontFace(bool isDark, TrafficSign s) => Container(
         key: const ValueKey('front'),
-        width: 240,
-        height: 300,
-        padding: const EdgeInsets.all(20),
+        width: 260,
+        height: 320,
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDark ? kCard : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isDark ? kBorder : const Color(0xFFE4E6EC)),
+          color: isDark ? kCardDark : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: isDark ? kBorderDark : const Color(0xFFE4E6EC)),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
         alignment: Alignment.center,
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          TrafficSignBadge(sign: s, size: 130),
+          Container(
+            width: 170,
+            height: 170,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.07) : const Color(0xFFF3F5F9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Center(child: TrafficSignBadge(sign: s, size: 130)),
+          ),
           const SizedBox(height: 18),
-          Text('Bu levhayı biliyor musun?', textAlign: TextAlign.center,
+          Text('Bu levhayı biliyor musun?',
+              textAlign: TextAlign.center,
               style: ts(size: 13, w: FontWeight.w600, color: isDark ? Colors.white54 : Colors.black45)),
         ]),
       );
 
   Widget _backFace(bool isDark, TrafficSign s) => Container(
         key: const ValueKey('back'),
-        width: 240,
-        height: 300,
-        padding: const EdgeInsets.all(20),
+        width: 260,
+        height: 320,
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDark ? kCard : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: kPrimary, width: 1.6),
+          color: isDark ? kCardDark : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: kPrimary, width: 1.8),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: kPrimary.withOpacity(0.12),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
         alignment: Alignment.center,
         child: SingleChildScrollView(
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            TrafficSignBadge(sign: s, size: 80),
-            const SizedBox(height: 12),
-            Text(s.name, textAlign: TextAlign.center,
-                style: ts(size: 15, w: FontWeight.w800, color: isDark ? Colors.white : Colors.black87)),
+            TrafficSignBadge(sign: s, size: 84),
+            const SizedBox(height: 14),
+            Text(s.name,
+                textAlign: TextAlign.center,
+                style: ts(size: 16, w: FontWeight.w800, color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 8),
-            Text(s.meaning, textAlign: TextAlign.center,
-                style: ts(size: 12, color: isDark ? Colors.white70 : Colors.black54, height: 1.35)),
+            Text(s.meaning,
+                textAlign: TextAlign.center,
+                style: ts(size: 12.5, color: isDark ? Colors.white70 : Colors.black54, height: 1.4)),
           ]),
         ),
       );
@@ -5758,25 +6701,30 @@ class _SignQuizScreenState extends State<SignQuizScreen> {
 
     if (_questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Mini Test'), backgroundColor: kCardElevated, foregroundColor: Colors.white),
+        backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
+        appBar: AppBar(
+          title: const Text('Mini Test'),
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+        ),
         body: Center(child: Text('Bu kategoride yeterli levha yok.', style: ts(size: 13, color: isDark ? Colors.white54 : Colors.black45))),
       );
     }
 
     final q = _questions[_index];
     return Scaffold(
-      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
       appBar: AppBar(
-        title: Text('${kSignCategoryTitles[widget.category]} · Mini Test', style: ts(size: 14.5, w: FontWeight.w700, color: Colors.white)),
-        backgroundColor: kCardElevated,
-        foregroundColor: Colors.white,
+        title: Text('${kSignCategoryTitles[widget.category]} · Mini Test', style: ts(size: 14.5, w: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
       body: Column(children: [
         LinearProgressIndicator(
           value: (_index + 1) / _questions.length,
           minHeight: 4,
-          backgroundColor: isDark ? kCardElevated : const Color(0xFFE8EAED),
+          backgroundColor: isDark ? kCardElevatedDark : const Color(0xFFE8EAED),
           valueColor: const AlwaysStoppedAnimation<Color>(kPrimary),
         ),
         Expanded(
@@ -5784,9 +6732,21 @@ class _SignQuizScreenState extends State<SignQuizScreen> {
             padding: const EdgeInsets.all(18),
             children: [
               Text('${_index + 1} / ${_questions.length}', style: ts(size: 12, color: isDark ? Colors.white54 : Colors.black45)),
-              const SizedBox(height: 10),
-              Center(child: TrafficSignBadge(sign: q.sign, size: 130)),
-              const SizedBox(height: 6),
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 170,
+                  height: 170,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.07) : const Color(0xFFF3F5F9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E6EE)),
+                  ),
+                  child: Center(child: TrafficSignBadge(sign: q.sign, size: 130)),
+                ),
+              ),
+              const SizedBox(height: 12),
               Center(
                 child: Text('Bu levhanın anlamı nedir?',
                     style: ts(size: 14, w: FontWeight.w700, color: isDark ? Colors.white : Colors.black87)),
@@ -5850,11 +6810,11 @@ class _SignQuizResultScreen extends StatelessWidget {
     final color = pct >= 70 ? kSuccess : kDanger;
 
     return Scaffold(
-      backgroundColor: isDark ? kSurface : const Color(0xFFF4F5F8),
+      backgroundColor: isDark ? kSurfaceDark : const Color(0xFFF4F5F8),
       appBar: AppBar(
         title: const Text('Test Sonucu'),
-        backgroundColor: kCardElevated,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
@@ -6301,6 +7261,2167 @@ class DailyGoalCard extends StatelessWidget {
                       ? 'Yarın da devam et, seriyi bozma.'
                       : '$goal soru çöz, serini koru 🔥 ${s.streak} gün',
                   style: const TextStyle(color: C.txt2, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+// ══════════════════════════════════════════════════════════════════
+//  ÖZEL ÇALIŞMA — Animasyonlu / Görsel / Konu Anlatımı
+// ══════════════════════════════════════════════════════════════════
+
+class _SpecialLearningRow extends StatelessWidget {
+  final AppState s;
+  const _SpecialLearningRow({required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _specialCard(
+          context,
+          title: 'Animasyonlu Sorular',
+          subtitle: 'Adım adım senaryo • E-sınav tarzı',
+          icon: Icons.play_circle_fill_rounded,
+          color: const Color(0xFF7C3AED),
+          onTap: () => Navigator.push(
+            context,
+            _slideRoute(AnimatedQuestionsScreen(s: s)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _specialCard(
+          context,
+          title: 'Görsel Sorular',
+          subtitle: 'Pozisyon, levha ve şema görselleri',
+          icon: Icons.image_rounded,
+          color: const Color(0xFF0D9488),
+          onTap: () => Navigator.push(
+            context,
+            _slideRoute(VisualQuestionsScreen(s: s)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _specialCard(
+          context,
+          title: 'Konu Anlatımı',
+          subtitle: 'Resimli özet dersler',
+          icon: Icons.menu_book_rounded,
+          color: const Color(0xFF1E5BB8),
+          onTap: () => Navigator.push(
+            context,
+            _slideRoute(TopicLessonsScreen(s: s)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _specialCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.25)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 26),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Animasyonlu soru modeli ──────────────────────────────────────
+class AnimatedScenario {
+  final String id;
+  final String title;
+  final List<String> steps;
+  final String question;
+  final List<String> opts;
+  final int correct;
+  final String explanation;
+  final IconData icon;
+  final Color color;
+
+  const AnimatedScenario({
+    required this.id,
+    required this.title,
+    required this.steps,
+    required this.question,
+    required this.opts,
+    required this.correct,
+    required this.explanation,
+    required this.icon,
+    required this.color,
+  });
+}
+
+const List<AnimatedScenario> kAnimatedScenarios = [
+  AnimatedScenario(
+    id: 'a1',
+    title: 'Yeşilden sarıya ışık',
+    steps: [
+      'Araç yeşil ışıkta kavşağa yaklaşıyor',
+      'Işık yeşilden sarıya dönüyor',
+      'Sürücü güvenle durabilecek mesafede',
+      'Ne yapmalıdır?',
+    ],
+    question: 'Bu durumda sürücü nasıl davranmalıdır?',
+    opts: [
+      'Hızlanıp kavşağı geçmeli',
+      'Güvenle durmalı ve kırmızıya kadar beklemeli',
+      'Korna çalıp devam etmeli',
+      'Sağa dönüp yolu kısaltmalı',
+    ],
+    correct: 1,
+    explanation:
+        'Sarı ışıkta güvenle durulabiliyorsa durulmalı, kırmızı yanana kadar beklenmelidir.',
+    icon: Icons.traffic_rounded,
+    color: Color(0xFFF59E0B),
+  ),
+  AnimatedScenario(
+    id: 'a2',
+    title: 'Sollama senaryosu',
+    steps: [
+      'Önde yavaş giden bir araç var',
+      'Sol şerit boş ve görüş açık',
+      'Sürücü sollama kararı alıyor',
+      'Doğru sıra nedir?',
+    ],
+    question: 'Sollama yaparken doğru sıra hangisidir?',
+    opts: [
+      'Hızlan → şerit değiştir → sinyal ver',
+      'Sinyal ver → ayna/kontrol → şerit değiştir → geç → sağa dön',
+      'Korna çal → solla → sinyal ver',
+      'Direkt sol şeride girip geç',
+    ],
+    correct: 1,
+    explanation:
+        'Sollamada önce sinyal, sonra kontrol, ardından şerit değiştirme ve geçiş yapılır; iş bitince sağ şeride dönülür.',
+    icon: Icons.alt_route_rounded,
+    color: Color(0xFF3B82F6),
+  ),
+  AnimatedScenario(
+    id: 'a3',
+    title: 'Yaya geçidi',
+    steps: [
+      'Sürücü yaya geçidine yaklaşıyor',
+      'Yaya kaldırımdan yola adım atmak üzere',
+      'Işık yeşil (araç için)',
+      'Ne yapılmalı?',
+    ],
+    question: 'Bu durumda doğru davranış nedir?',
+    opts: [
+      'Hızlanıp geçitten önce geçmek',
+      'Yayaya yol verip durmak',
+      'Korna çalıp uyarmak',
+      'Şerit değiştirip devam etmek',
+    ],
+    correct: 1,
+    explanation:
+        'Yaya geçidinde yayalar önceliklidir. Yeşil ışık olsa bile yaya varsa durulur.',
+    icon: Icons.directions_walk_rounded,
+    color: Color(0xFF16A34A),
+  ),
+  AnimatedScenario(
+    id: 'a4',
+    title: 'Takip mesafesi',
+    steps: [
+      'Yoğun trafikte seyir halinde',
+      'Öndeki araç ani fren yapıyor',
+      'Takip mesafesi yetersiz',
+      'Sonuç ne olur?',
+    ],
+    question: 'Arkadan çarpma kazalarının en önemli nedeni nedir?',
+    opts: [
+      'Havanın yağışlı olması',
+      'Takip mesafesine uyulmaması',
+      'Öndeki aracın durması',
+      'Görüş mesafesinin kötü olması',
+    ],
+    correct: 1,
+    explanation:
+        'Yeterli takip mesafesi bırakılmazsa ani frenlerde arkadan çarpma kaçınılmazdır.',
+    icon: Icons.social_distance_rounded,
+    color: Color(0xFFDC2626),
+  ),
+  AnimatedScenario(
+    id: 'a5',
+    title: 'Park yerinden çıkış',
+    steps: [
+      'Araç park yerinde duruyor',
+      'Sürücü yola çıkmak istiyor',
+      'Görüş kısmen engelli',
+      'Zorunlu adımlar neler?',
+    ],
+    question: 'Park yerinden çıkarken hangileri zorunludur?',
+    opts: [
+      'Sadece korna çalmak',
+      'Sinyal + etraf kontrolü + gerekirse gözcü',
+      'Direkt gaza basmak',
+      'Sadece ayna bakmak',
+    ],
+    correct: 1,
+    explanation:
+        'Çıkış işareti, araç ve çevre kontrolü, görüş dışı yerlerde gözcü bulundurmak zorunludur.',
+    icon: Icons.local_parking_rounded,
+    color: Color(0xFF7C3AED),
+  ),
+  AnimatedScenario(
+    id: 'a7',
+    title: 'Ambulans yaklaşıyor',
+    steps: [
+      'Siren ve mavi-kırmızı ışık yaklaşıyor',
+      'Sürücü orta şeritte seyrediyor',
+      'Trafik yoğun değil',
+      'Ne yapılmalı?',
+    ],
+    question: 'Geçiş üstünlüğü olan araç yaklaşınca doğru davranış nedir?',
+    opts: [
+      'Hızlanıp önden gitmek',
+      'Sağa yanaşıp yol vermek',
+      'Korna çalıp uyarmak',
+      'Durup inmek',
+    ],
+    correct: 1,
+    explanation: 'Siren ve ışıklı acil araca derhal yol verilir; sağa yanaşılır.',
+    icon: Icons.emergency_rounded,
+    color: Color(0xFFDC2626),
+  ),
+  AnimatedScenario(
+    id: 'a8',
+    title: 'Takip mesafesi',
+    steps: [
+      'Önde giden araç ani fren yapıyor',
+      'Sürücü 1 saniyelik mesafede takip ediyor',
+      'Yol ıslak',
+      'Sonuç ne olabilir?',
+    ],
+    question: 'Yetersiz takip mesafesinin en olası sonucu nedir?',
+    opts: [
+      'Yakıt tasarrufu',
+      'Arkadan çarpma riski',
+      'Daha iyi görüş',
+      'Hız artışı',
+    ],
+    correct: 1,
+    explanation: 'Yetersiz mesafe arkadan çarpma kazalarının birincil nedenidir; ıslak yolda risk artar.',
+    icon: Icons.social_distance_rounded,
+    color: Color(0xFF2563EB),
+  ),
+  AnimatedScenario(
+    id: 'a9',
+    title: 'Kırmızı ışıkta sağa dönüş',
+    steps: [
+      'Sürücü sağa dönmek istiyor',
+      'Işık kırmızı',
+      'Sağa dönüşe izin veren özel levha yok',
+      'Yol boş görünüyor',
+    ],
+    question: 'Bu durumda sürücü ne yapmalıdır?',
+    opts: [
+      'Sağa dönüp geçmek',
+      'Durmak ve yeşili beklemek',
+      'Korna çalıp dönmek',
+      'Geri gitmek',
+    ],
+    correct: 1,
+    explanation: 'Özel izin levhası yoksa kırmızı ışıkta sağa dönüş yasaktır.',
+    icon: Icons.traffic_rounded,
+    color: Color(0xFFDC2626),
+  ),
+  AnimatedScenario(
+    id: 'a10',
+    title: 'Okul taşıtı',
+    steps: [
+      'Önde okul taşıtı stop işareti veriyor',
+      'Çocuklar inmeye hazırlanıyor',
+      'Karşı şerit boş',
+      'Sürücü ne yapmalı?',
+    ],
+    question: 'Okul taşıtı dur işareti verdiğinde diğer sürücüler ne yapmalıdır?',
+    opts: [
+      'Geçebilir',
+      'Durmalıdır',
+      'Yavaşlayıp geçebilir',
+      'Sadece gece durur',
+    ],
+    correct: 1,
+    explanation: 'Okul taşıtı stop işareti verdiğinde diğer araçlar da durmak zorundadır.',
+    icon: Icons.school_rounded,
+    color: Color(0xFFF59E0B),
+  ),
+
+];
+
+class AnimatedQuestionsScreen extends StatefulWidget {
+  final AppState s;
+  const AnimatedQuestionsScreen({super.key, required this.s});
+  @override
+  State<AnimatedQuestionsScreen> createState() => _AnimatedQuestionsScreenState();
+}
+
+class _AnimatedQuestionsScreenState extends State<AnimatedQuestionsScreen> {
+  int _idx = 0;
+  int _step = 0;
+  int? _sel;
+  bool _answered = false;
+  int _correct = 0;
+  Timer? _auto;
+
+  AnimatedScenario get cur => kAnimatedScenarios[_idx];
+  bool get _stepsDone => _step >= cur.steps.length;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSteps();
+  }
+
+  @override
+  void dispose() {
+    _auto?.cancel();
+    super.dispose();
+  }
+
+  void _startSteps() {
+    _auto?.cancel();
+    _step = 0;
+    _sel = null;
+    _answered = false;
+    _auto = Timer.periodic(const Duration(milliseconds: 1400), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (_step < cur.steps.length) {
+        setState(() => _step++);
+      } else {
+        t.cancel();
+      }
+    });
+  }
+
+  void _select(int i) {
+    if (!_stepsDone || _answered) return;
+    final ok = i == cur.correct;
+    setState(() {
+      _sel = i;
+      _answered = true;
+      if (ok) _correct++;
+    });
+    widget.s.answer(ok, Cat.trafik, cur.id);
+  }
+
+  void _next() {
+    if (_idx < kAnimatedScenarios.length - 1) {
+      setState(() => _idx++);
+      _startSteps();
+    } else {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Theme.of(context).cardColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (_) => Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$_correct / ${kAnimatedScenarios.length} doğru',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('Tamam'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Animasyonlu ${_idx + 1}/${kAnimatedScenarios.length}'),
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: Column(
+        children: [
+          LinearProgressIndicator(
+            value: (_idx + 1) / kAnimatedScenarios.length,
+            minHeight: 4,
+            backgroundColor: cs.surface,
+            valueColor: AlwaysStoppedAnimation(cur.color),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(18),
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: cur.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(cur.icon, color: cur.color, size: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        cur.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ...List.generate(cur.steps.length, (i) {
+                  final visible = i < _step;
+                  return AnimatedOpacity(
+                    duration: const Duration(milliseconds: 400),
+                    opacity: visible ? 1 : 0.15,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: visible
+                            ? cur.color.withOpacity(0.08)
+                            : cs.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: visible
+                              ? cur.color.withOpacity(0.35)
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: visible ? cur.color : cs.onSurface.withOpacity(0.12),
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: visible ? Colors.white : cs.onSurface.withOpacity(0.45),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              cur.steps[i],
+                              style: TextStyle(
+                                color: cs.onSurface,
+                                fontWeight: visible ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                if (_stepsDone) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    cur.question,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  ...List.generate(cur.opts.length, (i) {
+                    Color bg = cs.surface;
+                    Color border = Colors.transparent;
+                    if (_answered) {
+                      if (i == cur.correct) {
+                        bg = C.ok.withOpacity(0.12);
+                        border = C.okLight;
+                      } else if (i == _sel) {
+                        bg = C.err.withOpacity(0.12);
+                        border = C.errLight;
+                      }
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: GestureDetector(
+                        onTap: () => _select(i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: border, width: 2),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                String.fromCharCode(65 + i),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: C.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  cur.opts[i],
+                                  style: TextStyle(color: cs.onSurface),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  if (_answered) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: C.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        cur.explanation,
+                        style: TextStyle(
+                          color: cs.onSurface.withOpacity(0.75),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _next,
+                        child: Text(
+                          _idx < kAnimatedScenarios.length - 1
+                              ? 'Sonraki Senaryo'
+                              : 'Sonuçları Gör',
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Görsel sorular ───────────────────────────────────────────────
+class VisualQuestion {
+  final String id;
+  final String text;
+  final List<String> opts;
+  final int correct;
+  final String explanation;
+  final IconData visualIcon;
+  final Color visualColor;
+  final String visualLabel;
+  final Cat cat;
+
+  const VisualQuestion({
+    required this.id,
+    required this.text,
+    required this.opts,
+    required this.correct,
+    required this.explanation,
+    required this.visualIcon,
+    required this.visualColor,
+    required this.visualLabel,
+    required this.cat,
+  });
+}
+
+const List<VisualQuestion> kVisualQuestions = [
+  VisualQuestion(
+    id: 'v1',
+    text: 'Bu levha ne anlama gelir?',
+    opts: ['Yol ver', 'Dur', 'Girişi olmayan yol', 'Hız sınırı'],
+    correct: 1,
+    explanation: 'Sekizgen kırmızı levha DUR anlamına gelir. Tamamen durulup kontrol edilir.',
+    visualIcon: Icons.pan_tool_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'DUR',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v2',
+    text: 'Gösterge panelinde bu uyarı yandığında ne yapılmalıdır?',
+    opts: ['Yola devam edilmeli', 'Aracı durdurup motoru stop etmeli', 'Sadece yağ eklenmeli', 'Farlar kapatılmalı'],
+    correct: 1,
+    explanation: 'Yağ basıncı ikazı yandığında motor derhal stop edilmelidir.',
+    visualIcon: Icons.oil_barrel_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'YAĞ',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v3',
+    text: 'Bu pozisyon hangi yaralıya uygulanır?',
+    opts: ['Bilinci kapalı, solunum ve nabzı olan', 'Açık kırığı olan', 'Karın yarası olan', 'Sadece şoktaki'],
+    correct: 0,
+    explanation: 'Yarı yüzükoyun-yan yatış (koma) pozisyonu bilinci kapalı ama solunumu olanlara verilir.',
+    visualIcon: Icons.airline_seat_flat_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'KOMA',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v4',
+    text: 'Aralıklı yanıp sönen kırmızı ışık hangi levha ile aynıdır?',
+    opts: ['Yol ver', 'Dur', 'Hız sınırı', 'Tek yön'],
+    correct: 1,
+    explanation: 'Aralıklı kırmızı flaşör, DUR levhası ile aynı anlamdadır.',
+    visualIcon: Icons.traffic_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'FLAŞÖR',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v5',
+    text: 'Bu işaret hangi yolu bildirir?',
+    opts: ['Otoyol başlangıcı', 'Çıkmaz sokak', 'Yaya yolu', 'Bisiklet yolu'],
+    correct: 0,
+    explanation: 'Mavi kare otoyol levhası otoyolun başladığını gösterir.',
+    visualIcon: Icons.add_road_rounded,
+    visualColor: Color(0xFF1E5BB8),
+    visualLabel: 'OTOYOL',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v6',
+    text: 'Şarj ikaz lambası yandığında hangi sistem arızalıdır?',
+    opts: ['Fren', 'Şarj / alternatör', 'Marş', 'Ateşleme'],
+    correct: 1,
+    explanation: 'Kırmızı akü/şarj lambası alternatör veya şarj sistemini işaret eder.',
+    visualIcon: Icons.battery_alert_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'ŞARJ',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v7',
+    text: 'Bu levha neyi bildirir?',
+    opts: ['Azami hız 50', 'Minimum hız 50', 'Park yasağı', 'Tek yön'],
+    correct: 0,
+    explanation: 'Kırmızı çember içinde sayı azami hız sınırını gösterir.',
+    visualIcon: Icons.speed_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: '50',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v8',
+    text: 'Hararet ikazı yandığında ne yapılmalıdır?',
+    opts: ['Hızlanmalı', 'Güvenli yere çekip soğumasını beklemeli', 'Kapak hemen açılmalı', 'Su anında eklenmeli'],
+    correct: 1,
+    explanation: 'Motor hararet yaptığında güvenli yere çekilir, soğuması beklenir; sıcak kapak açılmaz.',
+    visualIcon: Icons.device_thermostat_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'ISI',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v9',
+    text: 'Heimlich manevrası hangi durumda uygulanır?',
+    opts: ['Kalp durması', 'Solunum yolu tam tıkanıklığı', 'Kırık', 'Yanık'],
+    correct: 1,
+    explanation: 'Tam tıkanmada Heimlich uygulanır; kısmi tıkanmada öksürtülür.',
+    visualIcon: Icons.health_and_safety_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'TYD',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v10',
+    text: 'Bu işaret ne anlama gelir?',
+    opts: ['Yol ver', 'Dur', 'Girişi olmayan yol', 'Park yeri'],
+    correct: 2,
+    explanation: 'Kırmızı çember içinde yatay beyaz çizgi girişi olmayan yolu bildirir.',
+    visualIcon: Icons.block_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'GİRİŞ YOK',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v11',
+    text: 'ABS ikaz lambası ne anlama gelir?',
+    opts: ['Frenler tamamen bozuk', 'ABS sistemi devre dışı kalmış olabilir', 'Yağ bitmiş', 'Akü bitmiş'],
+    correct: 1,
+    explanation: 'ABS lambası ABS sisteminin çalışmadığını gösterir; normal fren çalışır ama kilitlenme riski artar.',
+    visualIcon: Icons.car_crash_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'ABS',
+    cat: Cat.motor,
+  ),
+  // ——— 50+ yeni görsel soru ———
+  VisualQuestion(
+    id: 'v12',
+    text: 'Ters üçgen (kırmızı kenarlı) levha ne anlama gelir?',
+    opts: ['Dur', 'Yol ver', 'Tek yön', 'Park yasak'],
+    correct: 1,
+    explanation: 'Ters üçgen YOL VER levhasıdır; geçiş önceliği karşıya aittir.',
+    visualIcon: Icons.warning_amber_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'YOL VER',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v13',
+    text: 'Mavi zeminli dairesel levha genellikle neyi gösterir?',
+    opts: ['Yasak', 'Mecburi yön / talimat', 'Tehlike', 'Otoyol sonu'],
+    correct: 1,
+    explanation: 'Mavi daire mecburi yön veya mecburi gidiş talimatı verir.',
+    visualIcon: Icons.turn_right_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'MECBURİ',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v14',
+    text: 'Sarı eşkenar dörtgen levha neyi bildirir?',
+    opts: ['Kalıcı tehlike', 'Geçici yol çalışması / uyarı', 'Park yeri', 'Otobüs durağı'],
+    correct: 1,
+    explanation: 'Sarı-turuncu eşkenar dörtgen geçici uyarı (yol çalışması vb.) işaretidir.',
+    visualIcon: Icons.construction_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'YOL ÇALIŞMA',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v15',
+    text: 'Park yasağı levhası nasıl tanınır?',
+    opts: ['Mavi daire', 'Kırmızı çember + çapraz çizgi', 'Yeşil kare', 'Sarı üçgen'],
+    correct: 1,
+    explanation: 'Kırmızı çember içinde çapraz çizgi park veya duraklama yasağını gösterir.',
+    visualIcon: Icons.local_parking_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'PARK YASAK',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v16',
+    text: 'Şok pozisyonunda yaralının bacakları nasıl olmalıdır?',
+    opts: ['Düz ve yere paralel', 'Yukarı kaldırılmış (yaklaşık 30 cm)', 'Bükülmüş', 'Yan yatırılmış'],
+    correct: 1,
+    explanation: 'Şokta bilinç açık ve travma yoksa bacaklar hafif yükseltilir; kan beyne yönlensin diye.',
+    visualIcon: Icons.airline_seat_legroom_extra_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'ŞOK',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v17',
+    text: 'Kalp krizi şüphesinde bilinçli yaralıya hangi pozisyon verilir?',
+    opts: ['Yüzüstü', 'Yan yatış', 'Yarı oturuş (oturur pozisyon)', 'Bacaklar yukarı'],
+    correct: 2,
+    explanation: 'Kalp krizinde yarı oturuş solunumu ve kalbi rahatlatır.',
+    visualIcon: Icons.airline_seat_recline_normal_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'YARI OTURUŞ',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v18',
+    text: 'Fren balata aşınma ikazı genellikle hangi renktedir?',
+    opts: ['Yeşil', 'Sarı / turuncu', 'Mavi', 'Beyaz'],
+    correct: 1,
+    explanation: 'Balata uyarı lambası sarı/turuncu yanar; fren sistemini kontrol ettirin.',
+    visualIcon: Icons.warning_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'BALATA',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v19',
+    text: 'Emniyet kemeri ikaz lambası ne zaman yanar?',
+    opts: ['Sadece hız 80 üstü', 'Kemer takılı değilken', 'Motor soğukken', 'Far açıkken'],
+    correct: 1,
+    explanation: 'Kemer takılı değilse uyarı lambası ve sesli ikaz devreye girer.',
+    visualIcon: Icons.airline_seat_flat_angled_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'KEMER',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v20',
+    text: 'Yeşil ok şeklinde trafik ışığı ne anlama gelir?',
+    opts: ['Tüm yönlere geç', 'Sadece ok yönüne geçiş serbest', 'Dur', 'Sarıya hazırlan'],
+    correct: 1,
+    explanation: 'Yeşil ok, yalnızca o yön için geçişin serbest olduğunu gösterir.',
+    visualIcon: Icons.arrow_upward_rounded,
+    visualColor: Color(0xFF16A34A),
+    visualLabel: 'YEŞİL OK',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v21',
+    text: 'Yaya geçidi levhası hangi şekilde olur?',
+    opts: ['Kırmızı üçgen içinde yaya figürü', 'Mavi daire', 'Yeşil kare', 'Siyah dikdörtgen'],
+    correct: 0,
+    explanation: 'Tehlike uyarı üçgeni içinde yaya silueti yaya geçidini bildirir.',
+    visualIcon: Icons.directions_walk_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'YAYA',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v22',
+    text: 'Çocuklar geçebilir levhası hangi kategoridedir?',
+    opts: ['Yasaklama', 'Tehlike uyarı', 'Bilgi', 'Mecburi yön'],
+    correct: 1,
+    explanation: 'Üçgen kırmızı kenarlı uyarı levhaları tehlike sınıfındadır.',
+    visualIcon: Icons.escalator_warning_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'ÇOCUK',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v23',
+    text: 'Hava yastığı (airbag) ikaz lambası sürekli yanıyorsa ne yapılmalı?',
+    opts: ['Umursanmaz', 'Serviste kontrol ettirilir', 'Sigorta sökülür', 'Farlar kapatılır'],
+    correct: 1,
+    explanation: 'Airbag lambası sürekli yanıyorsa sistem arızalı olabilir; yetkili servise gidilir.',
+    visualIcon: Icons.car_repair_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'AIRBAG',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v24',
+    text: 'Sağa zorunlu yön levhası nasıl görünür?',
+    opts: ['Kırmızı çember', 'Mavi daire içinde beyaz ok', 'Sarı üçgen', 'Yeşil ok'],
+    correct: 1,
+    explanation: 'Mavi zemin üzerinde beyaz ok mecburi gidiş yönünü gösterir.',
+    visualIcon: Icons.turn_right_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'SAĞA',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v25',
+    text: 'Kanama kontrolünde ilk yapılması gereken nedir?',
+    opts: ['Turnike her zaman', 'Direkt baskı uygulamak', 'Yara yıkanır', 'Buz konur'],
+    correct: 1,
+    explanation: 'Önce temiz bezle direkt baskı uygulanır; gerekirse elevasyon ve baskı bandajı yapılır.',
+    visualIcon: Icons.bloodtype_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'KANAMA',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v26',
+    text: 'Sarı sürekli yanan trafik ışığında sürücü ne yapmalıdır?',
+    opts: ['Hızlanır', 'Güvenle durabileceği noktadaysa durur', 'Korna çalar', 'Şerit değiştirir'],
+    correct: 1,
+    explanation: 'Sarı ışık “dur” uyarısıdır; güvenle durulamıyorsa kavşak dikkatle geçilir.',
+    visualIcon: Icons.traffic_rounded,
+    visualColor: Color(0xFFEAB308),
+    visualLabel: 'SARI',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v27',
+    text: 'Lastik basıncı ikaz lambası (TPMS) neyi gösterir?',
+    opts: ['Yağ bitmiş', 'Lastik basıncı düşük / sistem uyarısı', 'Fren balatası bitmiş', 'Akü zayıf'],
+    correct: 1,
+    explanation: 'TPMS lambası lastik basıncının düşük olduğunu veya sensör arızasını bildirir.',
+    visualIcon: Icons.trip_origin_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'TPMS',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v28',
+    text: 'Bisiklet yolu levhası hangi renkte olur?',
+    opts: ['Kırmızı üçgen', 'Mavi daire içinde bisiklet', 'Sarı kare', 'Yeşil üçgen'],
+    correct: 1,
+    explanation: 'Mavi daire içinde bisiklet figürü mecburi veya tahsisli bisiklet yolunu gösterir.',
+    visualIcon: Icons.pedal_bike_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'BİSİKLET',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v29',
+    text: 'Omurga yaralanması şüphesinde ne yapılmamalıdır?',
+    opts: ['Baş-boyun sabitlenir', 'Gereksiz hareket ettirilmez', 'Yan yatış pozisyonu verilir', 'Profesyonel yardım çağrılır'],
+    correct: 2,
+    explanation: 'Omurga şüphesinde yan yatış yapılmaz; baş-boyun sabitlenir, hareket ettirilmez.',
+    visualIcon: Icons.accessible_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'OMURGA',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v30',
+    text: 'Otoyol sonu levhası nasıl anlaşılır?',
+    opts: ['Mavi kare üzerine kırmızı çapraz', 'Sadece kırmızı çember', 'Yeşil ok', 'Sarı üçgen'],
+    correct: 0,
+    explanation: 'Otoyol levhasının üzeri kırmızı çapraz ile iptal edilmişse otoyol biter.',
+    visualIcon: Icons.add_road_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'OTOYOL SONU',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v31',
+    text: 'Motor arıza (check engine) lambası yandığında ne yapılmalı?',
+    opts: ['Mutlaka hemen stop', 'En kısa sürede arıza teşhisi yaptırılmalı', 'Umursanmaz', 'Yağ eklenir'],
+    correct: 1,
+    explanation: 'Check engine yanıyorsa elektronik arıza kodu okutulmalı; yanıp sönüyorsa acil müdahale gerekebilir.',
+    visualIcon: Icons.engineering_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'MOTOR',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v32',
+    text: 'Tehlikeli madde taşıyan araç levhası (turuncu plaka) neyi gösterir?',
+    opts: ['Hız sınırı', 'Tehlikeli madde sınıfı / UN kodu', 'Park yasağı', 'Yol çalışması'],
+    correct: 1,
+    explanation: 'Turuncu plaka tehlikeli madde sınıfını ve UN numarasını bildirir.',
+    visualIcon: Icons.local_shipping_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'ADR',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v33',
+    text: 'Suni solunumda yetişkinde ağızdan ağıza sıklık yaklaşık nedir?',
+    opts: ['Dakikada 5–6', 'Dakikada 10–12', 'Dakikada 30', 'Dakikada 60'],
+    correct: 1,
+    explanation: 'Yetişkinde kurtarıcı solunum yaklaşık dakikada 10–12 kez uygulanır (CPR protokolüne göre değişir).',
+    visualIcon: Icons.air_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'SOLUNUM',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v34',
+    text: 'Sağa tehlikeli viraj levhası hangi sınıftadır?',
+    opts: ['Bilgi', 'Yasak', 'Tehlike uyarı', 'Mecburi'],
+    correct: 2,
+    explanation: 'Üçgen kırmızı kenarlı levhalar tehlike uyarı sınıfındadır.',
+    visualIcon: Icons.turn_slight_right_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'VİRAJ',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v35',
+    text: 'Dörtlü flaşör ne zaman yakılmalıdır?',
+    opts: ['Sadece gece', 'Arıza, kaza veya ani yavaşlama gibi tehlikeli durumlarda', 'Her parkta', 'Yağmurda'],
+    correct: 1,
+    explanation: 'Dörtlüler arıza, kaza, sis veya ani tehlike durumlarında yakılır.',
+    visualIcon: Icons.flare_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'DÖRTLÜ',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v36',
+    text: 'Yanıkta ilk yardımda ne yapılmamalıdır?',
+    opts: ['Soğuk su ile soğutmak', 'Diş macunu / yoğurt sürmek', 'Takı çıkarmak', 'Temiz örtü ile örtmek'],
+    correct: 1,
+    explanation: 'Yanığa diş macunu, yoğurt, yağ sürülmez; soğuk su ile soğutulur.',
+    visualIcon: Icons.local_fire_department_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'YANIK',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v37',
+    text: 'Tek yön levhası genellikle nasıl görünür?',
+    opts: ['Kırmızı çember', 'Mavi dikdörtgen / ok', 'Sarı üçgen', 'Yeşil daire'],
+    correct: 1,
+    explanation: 'Tek yön bilgi levhası mavi zemin üzerinde ok ile gösterilir.',
+    visualIcon: Icons.arrow_upward_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'TEK YÖN',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v38',
+    text: 'El freni (park freni) ikaz lambası kırmızı yanıyorsa ne olabilir?',
+    opts: ['Far arızası', 'El freni çekili veya fren hidroliği düşük', 'Yağ normal', 'Kemer takılı'],
+    correct: 1,
+    explanation: 'Kırmızı P / ünlem lambası el freni çekiliyken veya hidroliği düşükken yanar.',
+    visualIcon: Icons.handyman_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'P FREN',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v39',
+    text: 'Kavşak yaklaşırken sarıya dönen ışıkta sürücü ne yapmalıdır?',
+    opts: ['Mutlaka geçer', 'Güvenle durabilecekse durur', 'Korna çalar', 'Şerit değiştirir'],
+    correct: 1,
+    explanation: 'Sarı ışıkta güvenle durulabiliyorsa durulur; aksi halde dikkatle geçilir.',
+    visualIcon: Icons.traffic_rounded,
+    visualColor: Color(0xFFEAB308),
+    visualLabel: 'KAVŞAK',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v40',
+    text: 'Bayılan (baygın) ve solunumu olan kişide öncelik nedir?',
+    opts: ['Su içirmek', 'Hava yolu açıklığı + yan yatış', 'Koşarak hastane', 'Kolonya koklatmak'],
+    correct: 1,
+    explanation: 'Bilinç kapalı solunum varsa hava yolu açık tutulur ve koma (yan yatış) pozisyonu verilir.',
+    visualIcon: Icons.airline_seat_flat_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'BAYILMA',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v41',
+    text: 'Hız sınırı sonu levhası nasıl anlaşılır?',
+    opts: ['Sayı kaybolur', 'Gri / siyah çapraz çizgili daire', 'Yeşil 50', 'Mavi ok'],
+    correct: 1,
+    explanation: 'Azami hız sonu, üzeri çapraz çizilmiş gri daire ile gösterilir.',
+    visualIcon: Icons.speed_rounded,
+    visualColor: Color(0xFF64748B),
+    visualLabel: 'HIZ SONU',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v42',
+    text: 'ESP / denge programı ikazı yanıp sönüyorsa ne anlama gelir?',
+    opts: ['Sistem kapalı', 'Sistem aktif müdahale ediyor', 'Fren bitmiş', 'Yağ düşük'],
+    correct: 1,
+    explanation: 'ESP lambasının yanıp sönmesi sistemin kaymayı önlemek için devrede olduğunu gösterir.',
+    visualIcon: Icons.sync_problem_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'ESP',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v43',
+    text: 'Okul geçidi levhası sürücüye neyi hatırlatır?',
+    opts: ['Hızlanmayı', 'Dikkat ve hız azaltmayı', 'Park etmeyi', 'Korna çalmayı'],
+    correct: 1,
+    explanation: 'Okul / çocuk geçidi uyarılarında hız düşürülür, dikkat artar.',
+    visualIcon: Icons.school_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'OKUL',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v44',
+    text: 'CPR’de yetişkinde göğüs basısı / solunum oranı (standart) nedir?',
+    opts: ['5 bası 1 solunum', '15 bası 2 solunum', '30 bası 2 solunum', '50 bası 5 solunum'],
+    correct: 2,
+    explanation: 'Güncel temel yaşam desteğinde yetişkinde 30 göğüs basısı + 2 solunum uygulanır.',
+    visualIcon: Icons.favorite_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'CPR 30:2',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v45',
+    text: 'Sis farları ne zaman yakılmalıdır?',
+    opts: ['Her gece', 'Görüş ciddi azaldığında (sis, yoğun yağmur)', 'Sadece otoyolda', 'Gündüz her zaman'],
+    correct: 1,
+    explanation: 'Sis farları görüş mesafesi önemli ölçüde azaldığında kullanılır.',
+    visualIcon: Icons.cloud_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'SİS',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v46',
+    text: 'Duraklama ve park yasağı levhası nasıl ayırt edilir?',
+    opts: ['Tek çapraz çizgi park, çift çapraz duraklama+park', 'Hepsi aynı', 'Mavi daire', 'Yeşil kare'],
+    correct: 0,
+    explanation: 'Tek kırmızı çapraz genellikle park yasağı; çift çapraz hem duraklama hem park yasağıdır.',
+    visualIcon: Icons.local_parking_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'DURAKLAMA',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v47',
+    text: 'Yüksek gerilim / elektrik çarpmasında ilk kural nedir?',
+    opts: ['Hemen dokunmak', 'Kaynağı kesmek / güvenli hale getirmek', 'Su dökmek', 'Koşarak uzaklaşmak'],
+    correct: 1,
+    explanation: 'Önce elektrik kaynağı kesilir veya yalıtkan malzeme ile güvenli hale getirilir.',
+    visualIcon: Icons.electrical_services_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'ELEKTRİK',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v48',
+    text: 'Öndeki araca güvenli takip mesafesi kuralı (saniye kuralı) yaklaşık nedir?',
+    opts: ['0,5 saniye', '2 saniye (ideal 3)', '10 saniye', '30 saniye'],
+    correct: 1,
+    explanation: 'Kuru havada en az 2 saniye, ideal 3 saniye takip mesafesi önerilir.',
+    visualIcon: Icons.more_horiz_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: '2 SN',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v49',
+    text: 'Reflektör (üçgen) nerede ve nasıl konulur?',
+    opts: ['Aracın içine', 'Aracın en az 30 m gerisine, trafiği görecek şekilde', 'Sadece gece', 'Kaputa'],
+    correct: 1,
+    explanation: 'Arıza üçgeni aracın gerisine, sürücülerin görebileceği mesafeye (en az ~30 m) konulur.',
+    visualIcon: Icons.change_history_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'ÜÇGEN',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v50',
+    text: 'Kırmızı sürekli yanan trafik ışığında sürücü ne yapar?',
+    opts: ['Yavaş geçebilir', 'Tamamen durur, yeşil veya yetkili işaretini bekler', 'Sağa serbestçe döner', 'Korna ile geçer'],
+    correct: 1,
+    explanation: 'Kırmızı ışıkta mutlaka durulur; aksi trafik suçudur.',
+    visualIcon: Icons.stop_circle_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'KIRMIZI',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v51',
+    text: 'Göz yaralanmasında ilk yardımda ne yapılmamalıdır?',
+    opts: ['Gözü ovuşturmak', 'Temiz su ile yıkamak (kimyasalda)', 'Gözü kapatmak', 'Profesyonel yardım'],
+    correct: 0,
+    explanation: 'Göz asla ovuşturulmaz; kimyasal sıçramada bol su ile yıkanır.',
+    visualIcon: Icons.visibility_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'GÖZ',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v52',
+    text: 'Yaya ve araçların ortak kullandığı yol levhası neyi ifade eder?',
+    opts: ['Otoyol', 'Yaya öncelikli / ortak kullanım alanı', 'Sadece bisiklet', 'Park yeri'],
+    correct: 1,
+    explanation: 'Ortak kullanım veya yaya bölgesi levhaları yaya önceliğini vurgular.',
+    visualIcon: Icons.directions_walk_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'YAYA BÖLGE',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v53',
+    text: 'Düşük yakıt ikazı yandığında ne yapılmalıdır?',
+    opts: ['Hızlanıp bitirmek', 'En yakın benzin istasyonuna gitmek', 'Motoru stop etmek', 'Farları kapatmak'],
+    correct: 1,
+    explanation: 'Yakıt lambası yanınca rezervle en yakın istasyona güvenli şekilde gidilir.',
+    visualIcon: Icons.local_gas_station_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'YAKIT',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v54',
+    text: 'Kırık şüphesinde yapılan yanlış uygulama hangisidir?',
+    opts: ['Hareket ettirmemek', 'Sabitlemek (atel)', 'Kırığı yerine oturtmaya çalışmak', 'Soğuk uygulamak'],
+    correct: 2,
+    explanation: 'Kırık yerine oturtulmaya çalışılmaz; sabitlenir ve sağlık ekibine bırakılır.',
+    visualIcon: Icons.personal_injury_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'KIRIK',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v55',
+    text: 'Gece yerleşim yeri dışında uzağı gösteren farlar ne zaman kısılır?',
+    opts: ['Hiçbir zaman', 'Karşıdan araç gelince veya arkadan yaklaşınca', 'Sadece yağmurda', 'Sadece otoyolda'],
+    correct: 1,
+    explanation: 'Karşıdan gelen veya öndeki aracı rahatsız etmemek için uzun farlar kısılır.',
+    visualIcon: Icons.wb_twilight_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'FAR',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v56',
+    text: 'Yol ver levhasında sürücü ne yapmalıdır?',
+    opts: ['Tamamen durmak zorunda', 'Gerekirse yavaşlayıp önceliği vermek', 'Hızlanmak', 'Korna çalmak'],
+    correct: 1,
+    explanation: 'Yol ver’de zorunlu tam duruş yok; geçiş önceliği diğerine aittir, gerekirse yavaşlanır/durulur.',
+    visualIcon: Icons.priority_high_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'YOL VER',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v57',
+    text: 'Zehirlenmede bilinç kapalıysa ne yapılmamalıdır?',
+    opts: ['112 aramak', 'Ağızdan bir şey içirmeye çalışmak', 'Hava yolu kontrolü', 'Yan yatış (uygunsa)'],
+    correct: 1,
+    explanation: 'Bilinç kapalıysa ağızdan yiyecek-içecek verilmez; hava yolu ve 112 önceliklidir.',
+    visualIcon: Icons.dangerous_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'ZEHİR',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v58',
+    text: 'Egzoz emisyon / motor arıza lambası ile ilgili doğru ifade hangisidir?',
+    opts: ['Sadece yakıt bitince yanar', 'Emisyon veya motor kontrol sistemi uyarısıdır', 'Far arızasıdır', 'Kemer uyarısıdır'],
+    correct: 1,
+    explanation: 'Motor arıza lambası emisyon ve motor yönetim sistemi ile ilgilidir.',
+    visualIcon: Icons.eco_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'EMİSYON',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v59',
+    text: 'Dönel kavşakta (ada) genel geçiş önceliği kuralı nedir?',
+    opts: ['Sağdan gelen her zaman', 'Kavşak içindeki araçların önceliği vardır', 'Büyük araç öncelikli', 'Hızlı olan geçer'],
+    correct: 1,
+    explanation: 'Dönel kavşakta içerideki araçlara yol verilir (aksi işaret yoksa).',
+    visualIcon: Icons.sync_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'DÖNEL',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v60',
+    text: 'Suda boğulma şüphesinde karaya alınan ve solunumu olmayan kişide ne yapılır?',
+    opts: ['Sadece beklenir', 'Temel yaşam desteği (CPR) başlatılır', 'Su içirilir', 'Sırt üstü bırakılır'],
+    correct: 1,
+    explanation: 'Solunum yoksa hemen CPR başlatılır; mümkünse su tahliyesi de değerlendirilir.',
+    visualIcon: Icons.pool_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'BOĞULMA',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v61',
+    text: 'U dönüşü yasağı levhası nasıl görünür?',
+    opts: ['Mavi ok', 'Kırmızı çember içinde U dönüş oku üzeri çizili', 'Yeşil U', 'Sarı üçgen'],
+    correct: 1,
+    explanation: 'Yasaklama levhasında U dönüş figürünün üzeri kırmızı çizgilidir.',
+    visualIcon: Icons.undo_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'U YASAK',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v62',
+    text: 'Araçta yangın çıkarsa ilk yapılması gereken nedir?',
+    opts: ['Kaputu açıp bakmak', 'Motoru stop edip mümkünse yangın söndürücü kullanmak / uzaklaşmak', 'Su dökmek', 'Benzin eklemek'],
+    correct: 1,
+    explanation: 'Motor stop edilir, yangın söndürücü kullanılır; kontrol edilemiyorsa uzaklaşılıp 112 aranır.',
+    visualIcon: Icons.fire_extinguisher_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'YANGIN',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v63',
+    text: 'Kaygan yol levhası sürücüye neyi hatırlatır?',
+    opts: ['Hızlanmayı', 'Hızı azaltıp mesafeyi artırmayı', 'Farları kapatmayı', 'Şerit değiştirmeyi'],
+    correct: 1,
+    explanation: 'Kaygan yol uyarısında hız düşürülür, ani manevradan kaçınılır.',
+    visualIcon: Icons.ac_unit_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'KAYGAN',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v64',
+    text: 'Geçiş üstünlüğüne sahip araçlarda ne bulunur?',
+    opts: ['Sadece korna', 'Siren ve/veya özel ışık donanımı', 'Sadece sarı flaşör', 'Hiçbir işaret'],
+    correct: 1,
+    explanation: 'Ambulans, itfaiye, polis gibi araçlar siren ve özel ışıkla geçiş üstünlüğü kullanır.',
+    visualIcon: Icons.emergency_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'ACİL',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v65',
+    text: 'Emniyet şeridi (banket) ne için kullanılır?',
+    opts: ['Normal seyir', 'Acil durum ve arıza', 'Sollama', 'Park'],
+    correct: 1,
+    explanation: 'Emniyet şeridi acil durum, arıza ve yetkili araçlar içindir.',
+    visualIcon: Icons.border_right_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'ŞERİT',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v66',
+    text: 'Yaya geçidinde araç sürücüsü ne yapmalıdır?',
+    opts: ['Hızlanır', 'Yayaya ilk geçiş hakkını verir', 'Korna çalar', 'Far yakar'],
+    correct: 1,
+    explanation: 'Yaya geçidinde yayaların geçiş önceliği vardır.',
+    visualIcon: Icons.directions_walk_rounded,
+    visualColor: Color(0xFF16A34A),
+    visualLabel: 'YAYA',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v67',
+    text: 'Alkollü araç kullanmanın sonucu nedir?',
+    opts: ['Sadece uyarı', 'Trafik suçudur; ceza ve ehliyet işlemleri uygulanır', 'Serbesttir', 'Sadece gece yasak'],
+    correct: 1,
+    explanation: 'Belirlenen sınırın üzerinde alkol ile araç kullanmak yasaktır ve yaptırımı vardır.',
+    visualIcon: Icons.no_drinks_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'ALKOL',
+    cat: Cat.ceza,
+  ),
+  VisualQuestion(
+    id: 'v68',
+    text: 'Çevre yolunda hız sınırı levhası yoksa genel kural nedir?',
+    opts: ['Sınırsız', 'Yerleşim yeri dışı genel sınırlara uyulur', 'Her zaman 50', 'Her zaman 120'],
+    correct: 1,
+    explanation: 'Levhada belirtilmedikçe ilgili yol türünün genel hız sınırları geçerlidir.',
+    visualIcon: Icons.speed_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'HIZ',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v69',
+    text: 'Araçta yangın söndürücü bulundurma zorunluluğu hangi araçlar için geçerlidir?',
+    opts: ['Sadece kamyon', 'İlgili yönetmelikte belirtilen sınıf ve turlarda zorunludur', 'Hiçbirinde zorunlu değil', 'Sadece taksi'],
+    correct: 1,
+    explanation: 'Yangın söndürücü bulundurma zorunluluğu araç cinsine göre yönetmelikle belirlenir.',
+    visualIcon: Icons.fire_extinguisher_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'SÖNDÜRÜCÜ',
+    cat: Cat.aracTeknik,
+  ),
+  VisualQuestion(
+    id: 'v70',
+    text: 'Sessiz bölge / korna yasağı levhası ne anlama gelir?',
+    opts: ['Hız sınırı 30', 'Gereksiz korna çalmak yasaktır', 'Far yakmak yasak', 'Park serbest'],
+    correct: 1,
+    explanation: 'Sesli uyarı yasağı bölgelerinde gereksiz korna kullanılmaz.',
+    visualIcon: Icons.volume_off_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'KORNA YASAK',
+    cat: Cat.levhalar,
+  ),
+  VisualQuestion(
+    id: 'v71',
+    text: 'İki yönlü trafikte sollama hangi taraftan yapılır?',
+    opts: ['Soldan', 'Sağdan', 'Her iki yandan', 'Kaldırımdan'],
+    correct: 0,
+    explanation: 'Türkiye’de sollama kural olarak soldan yapılır (aksine işaret yoksa).',
+    visualIcon: Icons.arrow_upward_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'SOLLAMA',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v72',
+    text: 'Çocuk oto koltuğu ne için zorunludur?',
+    opts: ['Süs için', 'Belirli yaş/boy/kilo gruplarında güvenli taşıma için', 'Sadece otoyolda', 'Sadece ön koltukta'],
+    correct: 1,
+    explanation: 'Çocuklar uygun oto koltuğu veya yükseltici ile taşınmalıdır.',
+    visualIcon: Icons.child_care_rounded,
+    visualColor: Color(0xFF7C3AED),
+    visualLabel: 'ÇOCUK',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v73',
+    text: 'Egzozdan siyah duman neyi gösterebilir?',
+    opts: ['Normal durum', 'Yakıt/hava karışımı veya enjeksiyon sorunu', 'Sadece soğuk hava', 'Far arızası'],
+    correct: 1,
+    explanation: 'Aşırı siyah duman genelde yanma karışımı veya filtre sorununa işaret eder.',
+    visualIcon: Icons.cloud_rounded,
+    visualColor: Color(0xFF64748B),
+    visualLabel: 'DUMAN',
+    cat: Cat.motor,
+  ),
+  VisualQuestion(
+    id: 'v74',
+    text: 'Trafik polisinin “dur” işareti ne anlama gelir?',
+    opts: ['Yavaşla', 'Derhal güvenli şekilde dur', 'Hızlan', 'Şerit değiştir'],
+    correct: 1,
+    explanation: 'Yetkilinin dur işareti bağlayıcıdır; güvenli şekilde durulur.',
+    visualIcon: Icons.front_hand_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'DUR İŞARET',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v75',
+    text: 'Yük taşıyan kamyonlarda yük ne şekilde olmalı?',
+    opts: ['Serbest sarkabilir', 'Sabitlenmiş ve taşıma sınırlarını aşmayan', 'Sadece öne yığılmış', 'Kapaksız her zaman'],
+    correct: 1,
+    explanation: 'Yük emniyetli sabitlenmeli, ağırlık ve boyut limitlerine uyulmalıdır.',
+    visualIcon: Icons.local_shipping_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'YÜK',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v76',
+    text: 'Kış lastiği zorunluluğu hangi koşullarda gündeme gelir?',
+    opts: ['Hiçbir zaman', 'İlgili tarihlerde ve belirlenen illerde yönetmeliğe göre', 'Sadece kar yağınca isteğe bağlı', 'Sadece kamyonlarda'],
+    correct: 1,
+    explanation: 'Kış lastiği uygulaması yönetmelik ve valilik kararlarıyla belirli dönem/illerde zorunlu olabilir.',
+    visualIcon: Icons.ac_unit_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'KIŞ',
+    cat: Cat.aracTeknik,
+  ),
+  VisualQuestion(
+    id: 'v77',
+    text: 'Trafikte “kör nokta” nedir?',
+    opts: ['Park yeri', 'Aynalarda görünmeyen araç çevresi alanı', 'Otoyol gişesi', 'Yaya geçidi'],
+    correct: 1,
+    explanation: 'Kör nokta, dikiz ve yan aynaların kapsamadığı alanlardır; şerit değişiminde kontrol edilir.',
+    visualIcon: Icons.visibility_off_rounded,
+    visualColor: Color(0xFFF59E0B),
+    visualLabel: 'KÖR NOKTA',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v78',
+    text: 'Araç muayenesinde emisyon ölçümü neyi kontrol eder?',
+    opts: ['Sadece lastik', 'Egzoz gazı kirlilik değerlerini', 'Sadece far ayarı', 'Koltuk kılıfı'],
+    correct: 1,
+    explanation: 'Emisyon ölçümü egzoz gazlarının yasal limitlerde olup olmadığını kontrol eder.',
+    visualIcon: Icons.eco_rounded,
+    visualColor: Color(0xFF16A34A),
+    visualLabel: 'EMİSYON',
+    cat: Cat.cevresel,
+  ),
+  VisualQuestion(
+    id: 'v79',
+    text: 'Şerit ihlali (düz çizgiyi geçmek) ne anlama gelir?',
+    opts: ['Serbest sollama', 'Sürekli çizgide şerit değiştirmemek', 'Park yeri', 'Hız artışı'],
+    correct: 1,
+    explanation: 'Kesik çizgi şerit değiştirmeye izin verebilir; sürekli çizgi ihlal edilmemelidir.',
+    visualIcon: Icons.view_column_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'ÇİZGİ',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v80',
+    text: 'İlk yardımcının öncelikli amacı nedir?',
+    opts: ['Tedavi etmek', 'Hayati tehlikeyi ortadan kaldırmak ve durumu kötüleştirmemek', 'İlaç yazmak', 'Ameliyat etmek'],
+    correct: 1,
+    explanation: 'İlk yardımda amaç yaşamsal fonksiyonları korumak ve ikincil zararları önlemektir.',
+    visualIcon: Icons.medical_services_rounded,
+    visualColor: Color(0xFF0D9488),
+    visualLabel: 'İLK YARDIM',
+    cat: Cat.ilkYardim,
+  ),
+  VisualQuestion(
+    id: 'v81',
+    text: 'Trafik kazasında olay yerinde ilk yapılması gerekenlerden biri nedir?',
+    opts: ['Delil karartmak', 'Güvenliği sağlamak ve 112’yi aramak', 'Araçları hemen çekmek', 'Tartışmak'],
+    correct: 1,
+    explanation: 'Önce ikinci kaza riski önlenir, 112 aranır, mümkünse yaralılara ilk yardım uygulanır.',
+    visualIcon: Icons.car_crash_rounded,
+    visualColor: Color(0xFFDC2626),
+    visualLabel: 'KAZA',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v82',
+    text: 'Gündüz farı (pozisyon / gündüz sürüş ışığı) ne işe yarar?',
+    opts: ['Sadece süs', 'Görünürlüğü artırmak', 'Sisini açmak', 'Klimayı çalıştırmak'],
+    correct: 1,
+    explanation: 'Gündüz sürüş ışıkları diğer sürücülerin sizi daha iyi görmesini sağlar.',
+    visualIcon: Icons.light_mode_rounded,
+    visualColor: Color(0xFFEAB308),
+    visualLabel: 'GÜNDÜZ FAR',
+    cat: Cat.aracTeknik,
+  ),
+  VisualQuestion(
+    id: 'v83',
+    text: 'Trafik adabında “diğerkâmlık” ne demektir?',
+    opts: ['Sadece kendi hakkını düşünmek', 'Başkalarının güvenliği ve kolaylığı için feragat göstermek', 'Hız yapmak', 'Korna çalmak'],
+    correct: 1,
+    explanation: 'Diğerkâmlık, trafik ortamında başkalarına kolaylık sağlamayı içerir.',
+    visualIcon: Icons.favorite_rounded,
+    visualColor: Color(0xFF7C3AED),
+    visualLabel: 'ADAP',
+    cat: Cat.trafikAdabi,
+  ),
+  VisualQuestion(
+    id: 'v84',
+    text: 'Yağmurda fren mesafesi nasıl değişir?',
+    opts: ['Kısalır', 'Uzunlaşır', 'Değişmez', 'Sıfırlanır'],
+    correct: 1,
+    explanation: 'Islak zeminde tutunma azalır, fren mesafesi belirgin şekilde artar.',
+    visualIcon: Icons.water_drop_rounded,
+    visualColor: Color(0xFF1565C0),
+    visualLabel: 'YAĞMUR',
+    cat: Cat.trafik,
+  ),
+  VisualQuestion(
+    id: 'v85',
+    text: 'Araçta periyodik bakım neden önemlidir?',
+    opts: ['Sadece estetik', 'Güvenlik, ömür ve emisyon için kritik sistemleri korur', 'Sadece satarken', 'Gereksizdir'],
+    correct: 1,
+    explanation: 'Yağ, fren, lastik, filtre bakımları güvenli sürüş ve çevre için gereklidir.',
+    visualIcon: Icons.build_rounded,
+    visualColor: Color(0xFF16A34A),
+    visualLabel: 'BAKIM',
+    cat: Cat.aracTeknik,
+  ),
+
+];
+
+
+
+class _VisualItem {
+  final String id;
+  final String text;
+  final List<String> opts;
+  final int correct;
+  final String explanation;
+  final Cat cat;
+  final String? imagePath;
+  final Color? accentColor;
+  final IconData? accentIcon;
+  final String? accentLabel;
+
+  _VisualItem({
+    required this.id,
+    required this.text,
+    required this.opts,
+    required this.correct,
+    required this.explanation,
+    required this.cat,
+    this.imagePath,
+    this.accentColor,
+    this.accentIcon,
+    this.accentLabel,
+  });
+
+  factory _VisualItem.fromQ(Q q) => _VisualItem(
+        id: q.id,
+        text: q.text,
+        opts: q.opts,
+        correct: q.correct,
+        explanation: q.explanation,
+        cat: q.cat,
+        imagePath: q.image,
+      );
+
+  factory _VisualItem.fromIcon(VisualQuestion v) => _VisualItem(
+        id: v.id,
+        text: v.text,
+        opts: v.opts,
+        correct: v.correct,
+        explanation: v.explanation,
+        cat: v.cat,
+        accentColor: v.visualColor,
+        accentIcon: v.visualIcon,
+        accentLabel: v.visualLabel,
+      );
+}
+
+class VisualQuestionsScreen extends StatefulWidget {
+  final AppState s;
+  const VisualQuestionsScreen({super.key, required this.s});
+  @override
+  State<VisualQuestionsScreen> createState() => _VisualQuestionsScreenState();
+}
+
+class _VisualQuestionsScreenState extends State<VisualQuestionsScreen> {
+  int _idx = 0;
+  int? _sel;
+  bool _answered = false;
+  int _correctCount = 0;
+  late final List<Q> _imageQs;
+  late final List<VisualQuestion> _iconQs;
+  late final bool _useRealImages;
+
+  // Hibrit liste: önce gerçek PNG sorular, sonra ikon kartları
+  late final List<_VisualItem> _items;
+
+  // Ücretsiz kullanıcıya ilk 8 gerçek görsel soru; kalanı Premium.
+  static const int kFreeImageLimit = 8;
+
+  @override
+  void initState() {
+    super.initState();
+    final allImg = List<Q>.from(QB.all.where((q) => q.image != null && q.image!.isNotEmpty));
+    allImg.shuffle();
+    if (widget.s.isPremium) {
+      _imageQs = allImg;
+    } else {
+      _imageQs = allImg.take(kFreeImageLimit).toList();
+    }
+    _iconQs = List<VisualQuestion>.from(kVisualQuestions)..shuffle();
+    // İkon kartlarının yarısı ücretsiz, yarısı premium
+    final iconLimit = widget.s.isPremium ? _iconQs.length : (_iconQs.length / 2).ceil();
+    final freeIcons = _iconQs.take(iconLimit).toList();
+    _items = [
+      ..._imageQs.map((q) => _VisualItem.fromQ(q)),
+      ...freeIcons.map((v) => _VisualItem.fromIcon(v)),
+    ];
+    _useRealImages = false; // legacy flag unused
+  }
+
+  int get _total => _items.length;
+
+  void _select(int i) {
+    if (_answered) return;
+    final cur = _items[_idx];
+    final ok = i == cur.correct;
+    setState(() {
+      _sel = i;
+      _answered = true;
+      if (ok) _correctCount++;
+    });
+    widget.s.answer(ok, cur.cat, cur.id);
+  }
+
+  void _next() {
+    if (_idx < _total - 1) {
+      setState(() {
+        _idx++;
+        _sel = null;
+        _answered = false;
+      });
+    } else {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Görsel sorular: $_correctCount / $_total doğru'),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (_total == 0) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Görsel Sorular')),
+        body: const Center(child: Text('Görsel soru bulunamadı.')),
+      );
+    }
+
+    final curItem = _items[_idx];
+    final text = curItem.text;
+    final opts = curItem.opts;
+    final correct = curItem.correct;
+    final explanation = curItem.explanation;
+    final imagePath = curItem.imagePath;
+    final accentColor = curItem.accentColor;
+    final accentIcon = curItem.accentIcon;
+    final accentLabel = curItem.accentLabel;
+
+    return Scaffold(
+      backgroundColor: isDark ? null : C.bg,
+      appBar: AppBar(
+        title: Text('Görsel ${_idx + 1}/$_total',
+            style: ts(size: 16, w: FontWeight.w700, color: isDark ? Colors.white : C.txt)),
+        backgroundColor: isDark ? null : C.surface,
+        foregroundColor: isDark ? Colors.white : C.txt,
+      ),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          // Gerçek görsel varsa göster, yoksa ikon kartı
+          if (imagePath != null)
+            QuestionImage(path: imagePath, maxHeight: 280)
+          else
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    (accentColor ?? C.primary).withOpacity(0.15),
+                    (accentColor ?? C.primary).withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: (accentColor ?? C.primary).withOpacity(0.3)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(accentIcon ?? Icons.image_rounded, size: 64, color: accentColor ?? C.primary),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: accentColor ?? C.primary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      accentLabel ?? 'GÖRSEL',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 14),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: isDark ? cs.onSurface : C.txt,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...List.generate(opts.length, (i) {
+            Color bg = isDark ? (Theme.of(context).cardColor) : Colors.white;
+            Color border = isDark ? kBorderDark : const Color(0xFFE2E8F0);
+            if (_answered) {
+              if (i == correct) {
+                bg = C.ok.withOpacity(0.12);
+                border = C.okLight;
+              } else if (i == _sel) {
+                bg = C.err.withOpacity(0.12);
+                border = C.errLight;
+              }
+            }
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
+                onTap: () => _select(i),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: border, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        String.fromCharCode(65 + i),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: C.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          opts[i],
+                          style: TextStyle(
+                            color: isDark ? cs.onSurface : C.txt,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          if (_answered) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: C.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                explanation,
+                style: TextStyle(
+                  color: isDark ? cs.onSurface.withOpacity(0.8) : C.txt2,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _next,
+                child: Text(_idx < _total - 1 ? 'Sonraki' : 'Bitir'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Konu anlatımı ────────────────────────────────────────────────
+class TopicLesson {
+  final String title;
+  final String category;
+  final IconData icon;
+  final Color color;
+  final List<String> points;
+  final String tip;
+
+  const TopicLesson({
+    required this.title,
+    required this.category,
+    required this.icon,
+    required this.color,
+    required this.points,
+    required this.tip,
+  });
+}
+
+const List<TopicLesson> kTopicLessons = [
+  TopicLesson(
+    title: 'Takip Mesafesi',
+    category: 'Trafik',
+    icon: Icons.social_distance_rounded,
+    color: Color(0xFF3B82F6),
+    points: [
+      '2 saniye kuralı: öndeki araç bir noktayı geçtikten 2 saniye sonra siz geçmelisiniz.',
+      'Yağmurda mesafe 2–3 katına çıkarılmalıdır.',
+      'Arkadan çarpma kazalarının birincil nedeni yetersiz mesafedir.',
+      'Hız arttıkça fren mesafesi karesel artar.',
+    ],
+    tip: 'Şehir içi 50 km/s için yaklaşık 25–30 metre mesafe bırakın.',
+  ),
+  TopicLesson(
+    title: 'Temel Yaşam Desteği',
+    category: 'İlk Yardım',
+    icon: Icons.favorite_rounded,
+    color: Color(0xFFDC2626),
+    points: [
+      'Yetişkinde: 30 kalp basısı + 2 solunum döngüsü.',
+      'Bası derinliği 5–6 cm, hız dakikada 100–120.',
+      'Baş geri–çene yukarı ile hava yolu açılır.',
+      'Bebeklerde iki parmakla göğüs kemiğinin alt yarısına bası yapılır.',
+    ],
+    tip: 'Önce 112 aranır, sonra temel yaşam desteğine başlanır.',
+  ),
+  TopicLesson(
+    title: 'DUR ve Yol Ver',
+    category: 'Levhalar',
+    icon: Icons.pan_tool_rounded,
+    color: Color(0xFFDC2626),
+    points: [
+      'DUR (sekizgen): tamamen dur, kontrol et, sonra geç.',
+      'Yol Ver (ters üçgen): kesişen yoldakilere öncelik tanı.',
+      'Aralıklı kırmızı flaşör = DUR levhası.',
+      'Aralıklı sarı flaşör = dikkatli geç.',
+    ],
+    tip: 'DUR çizgisinde tekerlek tamamen durmalıdır; yavaşlayıp geçmek ihlaldir.',
+  ),
+  TopicLesson(
+    title: 'Dizel vs Benzinli',
+    category: 'Motor',
+    icon: Icons.settings_rounded,
+    color: Color(0xFF16A34A),
+    points: [
+      'Dizel: hava sıkıştırılır, yakıt püskürtülür (buji yok).',
+      'Benzinli: buji ile ateşleme yapılır.',
+      'Dizele benzin konursa depo boşaltılmalıdır.',
+      'Yağ ve şarj ikazında motor stop edilmelidir.',
+    ],
+    tip: 'Yanlış yakıtta aracı çalıştırmayın; yakıt sistemi zarar görür.',
+  ),
+  TopicLesson(
+    title: 'Trafik Adabı',
+    category: 'Adap',
+    icon: Icons.people_rounded,
+    color: Color(0xFF7C3AED),
+    points: [
+      'Diğerkâmlık: geçiş kolaylığı sağlamak.',
+      'Gereksiz şerit değiştirme panik yaratır.',
+      'Kuralların nedenini bilmek adap göstergesidir.',
+      'Sadece ceza korkusuyla uymak adap değildir.',
+    ],
+    tip: 'Kendinizi geçene yavaşlayarak yol vermek feragat / diğerkâmlıktır.',
+  ),
+  TopicLesson(
+    title: 'Geçiş Üstünlüğü',
+    category: 'Trafik',
+    icon: Icons.emergency_rounded,
+    color: Color(0xFFF59E0B),
+    points: [
+      '1) Ambulans ve yaralı taşıyan araçlar',
+      '2) Organ / doku nakli araçları',
+      '3) İtfaiye ve acil müdahale',
+      '4) Güvenlik güçleri araçları',
+    ],
+    tip: 'Siren ve mavi/kırmızı ışık yanan araca derhal yol verin.',
+  ),
+];
+
+class TopicLessonsScreen extends StatelessWidget {
+  final AppState s;
+  const TopicLessonsScreen({super.key, required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Konu Anlatımı')),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: TopicsBank.all.isEmpty
+          ? const Center(child: Text('Konu anlatımları yüklenemedi.'))
+          : ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: TopicsBank.all.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, i) {
+          final lesson = TopicsBank.all[i];
+          return GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              _slideRoute(_TopicDetailPage(lesson: lesson)),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: lesson.color.withOpacity(0.25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: lesson.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(lesson.icon, color: lesson.color, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          lesson.title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          lesson.category,
+                          style: TextStyle(color: lesson.color, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: lesson.color),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TopicDetailPage extends StatelessWidget {
+  final TopicLesson lesson;
+  const _TopicDetailPage({required this.lesson});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(title: Text(lesson.title)),
+      bottomNavigationBar: const BannerAdWidget(),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Center(
+            child: Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: lesson.color.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(lesson.icon, size: 44, color: lesson.color),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: lesson.color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                lesson.category,
+                style: TextStyle(color: lesson.color, fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ...lesson.points.asMap().entries.map((e) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: lesson.color,
+                      child: Text(
+                        '${e.key + 1}',
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        e.value,
+                        style: TextStyle(color: cs.onSurface, height: 1.45, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [lesson.color.withOpacity(0.15), lesson.color.withOpacity(0.05)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: lesson.color.withOpacity(0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lightbulb_rounded, color: lesson.color),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'İpucu',
+                        style: TextStyle(color: lesson.color, fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(lesson.tip, style: TextStyle(color: cs.onSurface, height: 1.4)),
+                    ],
+                  ),
                 ),
               ],
             ),
