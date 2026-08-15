@@ -886,6 +886,11 @@ class AppState extends ChangeNotifier {
   Map<Cat, int> catScores = {};
   List<ExamResult> history = [];
 
+  // ── Reklam izleyerek açılan premium özellikler ──────────────
+  // Premium'a gücü yetmeyen kullanıcılar, kilitli her özelliği ayrı
+  // ayrı kısa bir ödüllü reklam izleyerek kalıcı olarak açabilir.
+  Set<String> rewardUnlocks = {};
+
   // ── Yanlış soru takibi ──────────────────────────────────────
   Set<String> wrongIds = {};
 
@@ -918,6 +923,7 @@ class AppState extends ChangeNotifier {
       level = p.getInt('level') ?? ((xp / 500).floor() + 1);
       favIds = (p.getStringList('favIds') ?? const []).toSet();
       wrongIds = (p.getStringList('wrongIds') ?? const []).toSet();
+      rewardUnlocks = (p.getStringList('rewardUnlocks') ?? const []).toSet();
       solvedToday = p.getInt('solvedToday') ?? 0;
       final lastDayMs = p.getInt('lastSolveDay');
       if (lastDayMs != null) {
@@ -967,6 +973,7 @@ class AppState extends ChangeNotifier {
       await p.setInt('level', level);
       await p.setStringList('favIds', favIds.toList());
       await p.setStringList('wrongIds', wrongIds.toList());
+      await p.setStringList('rewardUnlocks', rewardUnlocks.toList());
       await p.setInt('solvedToday', solvedToday);
       if (_lastSolveDay != null) {
         await p.setInt('lastSolveDay', _lastSolveDay!.millisecondsSinceEpoch);
@@ -1047,6 +1054,26 @@ class AppState extends ChangeNotifier {
   void unlockPremium() {
     isPremium = true;
     AdManager.instance.setPremium(true);
+    notifyListeners();
+    _persist();
+  }
+
+  /// Bir kategori Premium gerektirir ama kullanıcı ya Premium'dur ya da
+  /// daha önce bu kategori için ödüllü reklam izleyerek kalıcı olarak
+  /// açmıştır.
+  bool isCatUnlocked(Cat cat) =>
+      !cat.isPremiumOnly || isPremium || rewardUnlocks.contains('cat_${cat.name}');
+
+  /// Kategoriye bağlı olmayan Premium özellikler (ör. Süper Zor Mod) için
+  /// genel kilit kontrolü.
+  bool isFeatureUnlocked(String key) =>
+      isPremium || rewardUnlocks.contains(key);
+
+  /// Ödüllü reklam tamamlandığında ilgili özelliği/kategoriyi kalıcı
+  /// olarak açar.
+  void unlockWithReward(String key) {
+    if (isPremium || rewardUnlocks.contains(key)) return;
+    rewardUnlocks.add(key);
     notifyListeners();
     _persist();
   }
@@ -1425,6 +1452,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const BannerAdWidget(),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -1517,8 +1545,6 @@ class HomeScreen extends StatelessWidget {
                 _sec('Başarım Rozetleri'),
                 const SizedBox(height: 12),
                 _BadgeRow(s: s),
-                const SizedBox(height: 24),
-                const BannerAdWidget(),
                 const SizedBox(height: 80),
               ]),
             ),
@@ -1919,11 +1945,18 @@ class _CatGrid extends StatelessWidget {
       final cat = Cat.values[i];
       final cnt = QB.byCat(cat).length;
       final done = s.catScores[cat] ?? 0;
-      final locked = cat.isPremiumOnly && !s.isPremium;
+      final locked = !s.isCatUnlocked(cat);
       return GestureDetector(
         onTap: () {
           if (locked) {
-            showDialog(context: context, builder: (_) => _PremiumDialog(s: s));
+            showDialog(
+              context: context,
+              builder: (_) => _PremiumDialog(
+                s: s,
+                unlockKey: 'cat_${cat.name}',
+                unlockLabel: cat.label,
+              ),
+            );
             return;
           }
           final qs = QB.byCat(cat);
@@ -2138,11 +2171,18 @@ class CategoryScreen extends StatelessWidget {
         final cat = Cat.values[i];
         final qs = QB.byCat(cat);
         final done = s.catScores[cat] ?? 0;
-        final locked = cat.isPremiumOnly && !s.isPremium;
+        final locked = !s.isCatUnlocked(cat);
         return GestureDetector(
           onTap: () {
             if (locked) {
-              showDialog(context: context, builder: (_) => _PremiumDialog(s: s));
+              showDialog(
+                context: context,
+                builder: (_) => _PremiumDialog(
+                  s: s,
+                  unlockKey: 'cat_${cat.name}',
+                  unlockLabel: cat.label,
+                ),
+              );
               return;
             }
             if (qs.isEmpty) {
@@ -2369,6 +2409,7 @@ class _TestScreenState extends State<TestScreen>
       // çökertmek yerine kullanıcıya bilgi veren bir ekran gösterilir.
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),
+        bottomNavigationBar: const BannerAdWidget(),
         body: const _EmptyState(
           icon: Icons.inbox_rounded,
           title: 'Bu sette soru bulunamadı',
@@ -2798,7 +2839,7 @@ class ExamScreen extends StatelessWidget {
             '30 Soru • Karışık • Zorlu',
             Icons.whatshot,
             const Color(0xFFD32F2F),
-            s.isPremium
+            s.isFeatureUnlocked('superHard')
                 ? () {
                     final qs = QB.random(30);
                     if (qs.isEmpty) {
@@ -2811,9 +2852,13 @@ class ExamScreen extends StatelessWidget {
                   }
                 : () => showDialog(
                     context: context,
-                    builder: (_) => _PremiumDialog(s: s),
+                    builder: (_) => _PremiumDialog(
+                      s: s,
+                      unlockKey: 'superHard',
+                      unlockLabel: 'Süper Zor Mod',
+                    ),
                   ),
-            locked: !s.isPremium,
+            locked: !s.isFeatureUnlocked('superHard'),
           ),
           const SizedBox(height: 14),
           _ExCard(
@@ -3088,6 +3133,7 @@ class _RealExamState extends State<RealExamScreen> {
       // Soru bankası yüklenemediyse çökmek yerine bilgi ekranı göster.
       return Scaffold(
         appBar: AppBar(title: const Text('Deneme Sınavı')),
+        bottomNavigationBar: const BannerAdWidget(),
         body: const _EmptyState(
           icon: Icons.inbox_rounded,
           title: 'Sınav soruları yüklenemedi',
@@ -3097,6 +3143,7 @@ class _RealExamState extends State<RealExamScreen> {
     }
     final q = _qs[_idx];
     return Scaffold(
+      bottomNavigationBar: const BannerAdWidget(),
       appBar: AppBar(
         title: const Text('Deneme Sınavı'),
         actions: [
@@ -4249,7 +4296,13 @@ class _Settings extends StatelessWidget {
 /// restore sonrası [AppState.unlockPremium] ile açılır.
 class _PremiumDialog extends StatefulWidget {
   final AppState s;
-  const _PremiumDialog({required this.s});
+  /// Belirli bir kategoriyi/özelliği ödüllü reklamla açmak için anahtar.
+  /// Verilmezse (ör. genel Ayarlar ekranından açılınca) reklamla açma
+  /// seçeneği gösterilmez, sadece Premium satın alma sunulur.
+  final String? unlockKey;
+  /// Kullanıcıya gösterilecek özellik adı (ör. "Cezalar ve Hukuk").
+  final String? unlockLabel;
+  const _PremiumDialog({required this.s, this.unlockKey, this.unlockLabel});
   @override
   State<_PremiumDialog> createState() => _PremiumDialogState();
 }
@@ -4257,18 +4310,51 @@ class _PremiumDialog extends StatefulWidget {
 class _PremiumDialogState extends State<_PremiumDialog> {
   final BillingManager _billing = BillingManager.instance;
   bool _wasPending = false;
+  bool _rewardLoading = false;
 
   @override
   void initState() {
     super.initState();
     _billing.addListener(_onBillingChanged);
     _billing.ensureProductLoaded();
+    // Bu ekrana gelindiğinde ödüllü reklam hazır değilse şimdiden
+    // yüklenmeye başlasın ki kullanıcı butona bastığında beklemesin.
+    AdManager.instance.preloadRewarded();
   }
 
   @override
   void dispose() {
     _billing.removeListener(_onBillingChanged);
     super.dispose();
+  }
+
+  void _watchAdToUnlock() {
+    if (widget.unlockKey == null || _rewardLoading) return;
+    setState(() => _rewardLoading = true);
+    AdManager.instance.showRewarded(
+      onReward: (amount) {
+        widget.s.unlockWithReward(widget.unlockKey!);
+        if (!mounted) return;
+        setState(() => _rewardLoading = false);
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '🎉 ${widget.unlockLabel ?? 'Özellik'} reklam izleyerek açıldı!',
+            ),
+          ),
+        );
+      },
+      onUnavailable: () {
+        if (!mounted) return;
+        setState(() => _rewardLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reklam şu an hazır değil, birazdan tekrar deneyin.'),
+          ),
+        );
+      },
+    );
   }
 
   void _onBillingChanged() {
@@ -4380,7 +4466,47 @@ class _PremiumDialogState extends State<_PremiumDialog> {
               ),
             ),
           ],
-          const SizedBox(height: 24),
+          if (widget.unlockKey != null) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _rewardLoading ? null : _watchAdToUnlock,
+                icon: _rewardLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2.2),
+                      )
+                    : const Icon(Icons.ondemand_video_rounded, size: 20),
+                label: Text(
+                  _rewardLoading
+                      ? 'Reklam yükleniyor...'
+                      : 'Reklam İzleyerek Ücretsiz Aç',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: C.gold,
+                  side: const BorderSide(color: C.gold, width: 1.4),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Premium\'a gücün yetmiyor mu? Kısa bir reklam izleyerek'
+              ' ${widget.unlockLabel ?? 'bu özelliği'} kalıcı olarak ücretsiz aç.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? Colors.white54 : C.txt2,
+                fontSize: 11.5,
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -6707,6 +6833,7 @@ class _SignQuizScreenState extends State<SignQuizScreen> {
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
         ),
+        bottomNavigationBar: const BannerAdWidget(),
         body: Center(child: Text('Bu kategoride yeterli levha yok.', style: ts(size: 13, color: isDark ? Colors.white54 : Colors.black45))),
       );
     }
@@ -6774,6 +6901,7 @@ class _SignQuizScreenState extends State<SignQuizScreen> {
             ],
           ),
         ),
+        const BannerAdWidget(),
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
           child: SizedBox(
@@ -6868,6 +6996,7 @@ class WrongAnswersScreen extends StatelessWidget {
       builder: (_, __) {
         final list = QB.all.where((q) => s.wrongIds.contains(q.id)).toList();
         return Scaffold(
+          bottomNavigationBar: const BannerAdWidget(),
           appBar: AppBar(
             title: const Text('Yanlışlarım'),
             actions: [
@@ -8930,20 +9059,27 @@ class _VisualQuestionsScreenState extends State<VisualQuestionsScreen> {
   // Ücretsiz kullanıcıya ilk 8 gerçek görsel soru; kalanı Premium.
   static const int kFreeImageLimit = 8;
 
+  // Reklam izleyerek açma teklifi sunulacak mı? (ücretsiz sınırın
+  // ötesinde gösterilecek daha fazla içerik varsa true olur.)
+  bool _hasMoreContent = false;
+
   @override
   void initState() {
     super.initState();
     final allImg = List<Q>.from(QB.all.where((q) => q.image != null && q.image!.isNotEmpty));
     allImg.shuffle();
-    if (widget.s.isPremium) {
+    final unlocked = widget.s.isFeatureUnlocked('visualQuestions');
+    if (unlocked) {
       _imageQs = allImg;
     } else {
       _imageQs = allImg.take(kFreeImageLimit).toList();
     }
     _iconQs = List<VisualQuestion>.from(kVisualQuestions)..shuffle();
     // İkon kartlarının yarısı ücretsiz, yarısı premium
-    final iconLimit = widget.s.isPremium ? _iconQs.length : (_iconQs.length / 2).ceil();
+    final iconLimit = unlocked ? _iconQs.length : (_iconQs.length / 2).ceil();
     final freeIcons = _iconQs.take(iconLimit).toList();
+    _hasMoreContent = !unlocked &&
+        (allImg.length > kFreeImageLimit || _iconQs.length > iconLimit);
     _items = [
       ..._imageQs.map((q) => _VisualItem.fromQ(q)),
       ...freeIcons.map((v) => _VisualItem.fromIcon(v)),
@@ -8973,13 +9109,39 @@ class _VisualQuestionsScreenState extends State<VisualQuestionsScreen> {
         _answered = false;
       });
     } else {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Görsel sorular: $_correctCount / $_total doğru'),
+      _finishOrOfferUnlock();
+    }
+  }
+
+  /// Ücretsiz sınırın sonuna gelindiğinde: açılmamış daha fazla içerik
+  /// varsa kullanıcıya reklam izleyerek tüm görsel soruları kalıcı olarak
+  /// açma seçeneği sunar; reklamı izleyip açarsa ekranı tazeleyerek tüm
+  /// içerikle devam eder.
+  Future<void> _finishOrOfferUnlock() async {
+    if (_hasMoreContent && !widget.s.isFeatureUnlocked('visualQuestions')) {
+      await showDialog(
+        context: context,
+        builder: (_) => _PremiumDialog(
+          s: widget.s,
+          unlockKey: 'visualQuestions',
+          unlockLabel: 'Tüm Görsel Sorular',
         ),
       );
+      if (!mounted) return;
+      if (widget.s.isFeatureUnlocked('visualQuestions')) {
+        Navigator.of(context).pushReplacement(
+          _slideRoute(VisualQuestionsScreen(s: widget.s)),
+        );
+        return;
+      }
     }
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Görsel sorular: $_correctCount / $_total doğru'),
+      ),
+    );
   }
 
   @override
